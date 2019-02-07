@@ -2,7 +2,7 @@
 
   "manifest_version": 2,
   "name": "Clickloader",
-  "version": "1.0.4",
+  "version": "1.0.5",
 
   "description": "Simple extension for downloading media content by just right-clicking on it",
   "homepage_url": "https://github.com/ismorozs/clickloader",
@@ -14,7 +14,8 @@
   "permissions": [
     "<all_urls>",
     "tabs",
-    "downloads"
+    "downloads",
+    "storage"
   ],
 
   "background": {
@@ -33,6 +34,10 @@
         "mac": "MacCtrl+Alt+S"
       }
     }
+  },
+
+  "options_ui": {
+    "page": "options/options.html"
   },
 
   "author": "Igor Morozov"
