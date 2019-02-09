@@ -41,8 +41,8 @@ function onTabsUpdate (tabId, changeInfo, tab) {
 
 function onMessage (data) {
   if (data.senderId === browser.runtime.id) {
-    const imgName = data.imgUrl.split('//')[1].replace(/\//gi, '_');
-    browser.downloads.download({ url: data.imgUrl, saveAs: false, filename: STATE.saveFolder + '/' + imgName });
+    const imgName = data.src.split('//')[1].replace(/[/\\?%*:|"<>]/g, '_');
+    browser.downloads.download({ url: data.src, saveAs: false, filename: STATE.saveFolder + '/' + imgName });
   }
 }
 
