@@ -1,6 +1,7 @@
 (function () {
   if (window.hasRun) return;
   window.hasRun = true;
+  window.active = false;
 
   const SELECTORS = ['img', 'audio', 'video'];
 
@@ -27,11 +28,12 @@
   browser.runtime.onMessage.addListener(onMessage);
 
   function onMessage (message) {
-    if (message.senderId !== browser.runtime.id) {
+    if (message.senderId !== browser.runtime.id || window.active === message.activate) {
       return;
     }
 
     switchClickHandler(message);
+    window.active = message.activate;
   }
 
   function switchClickHandler (data) {
