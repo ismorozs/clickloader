@@ -42,7 +42,11 @@ function onTabsUpdate (tabId, changeInfo, tab) {
 function onMessage (data) {
   if (data.senderId === browser.runtime.id) {
     const imgName = data.src.split('//')[1].replace(/[/\\?%*:|"<>]/g, '_');
-    browser.downloads.download({ url: data.src, saveAs: false, filename: STATE.saveFolder + '/' + imgName });
+    browser.downloads.download({
+      url: data.src,
+      saveAs: false,
+      filename: STATE.saveFolder + '/' + imgName + data.extension
+    });
   }
 }
 

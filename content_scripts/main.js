@@ -2,6 +2,27 @@
   if (window.hasRun) return;
   window.hasRun = true;
 
+  const SELECTORS = ['img', 'audio', 'video'];
+
+  const SPECIAL_CASES = {
+    'www.instagram.com': {
+      'div._9AhH0': (el) => ({
+        src: el.previousElementSibling.firstElementChild.src,
+        extension: '.jpg'
+      }),
+      'img._6q-tv': (el) => ({
+        src: el.src,
+        extension: '.jpg'
+      })
+    }
+  }
+
+  const SITE_SPECIAL_CASES = SPECIAL_CASES[window.location.hostname];
+
+  if (SITE_SPECIAL_CASES) {
+    const specialSelectors = Object.keys(SITE_SPECIAL_CASES)
+    SELECTORS.splice.apply(SELECTORS, [0, 0].concat(specialSelectors))
+  }
 
   browser.runtime.onMessage.addListener(onMessage);
 
@@ -15,21 +36,34 @@
 
   function switchClickHandler (data) {
     const operation = data.activate ? 'add' : 'remove';
-    document.querySelectorAll('img, audio, video')
+    document.querySelectorAll(SELECTORS.join(', '))
       .forEach((el) => window[operation + 'EventListener']('contextmenu', sendImageUrl));
   }
 
   function sendImageUrl (e) {
     e.preventDefault();
-    const src = extractSrc(e.target);
-    if (src) {
-      browser.runtime.sendMessage({ src, senderId: browser.runtime.id });
+
+    const srcData = extractSrc(e.target);
+    if (srcData.src) {
+      browser.runtime.sendMessage({
+        src: srcData.src,
+        senderId: browser.runtime.id,
+        extension: srcData.extension || '',
+      });
     }
   }
 
   function extractSrc (el) {
+    if (SITE_SPECIAL_CASES) {
+      for (let selector in SITE_SPECIAL_CASES) {
+        if (el.matches(selector)) {
+          return SITE_SPECIAL_CASES[selector](el);
+        }
+      }
+    }
+
     if (!!el.src) {
-      return el.src;
+      return { src: el.src };
     }
 
     const testEl = document.createElement(el.tagName);
@@ -50,7 +84,7 @@
       src = possibleSources[0].src;
     }
 
-    return src;
+    return { src };
   }
 
 })();
