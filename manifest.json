@@ -2,13 +2,18 @@
 
   "manifest_version": 2,
   "name": "Clickloader",
-  "version": "1.0.5",
+  "version": "1.0.6",
 
   "description": "Simple extension for downloading media content by just right-clicking on it",
   "homepage_url": "https://github.com/ismorozs/clickloader",
 
   "icons": {
-    "32": "icons/cl32-inactive.png"
+    "16": "icons/c16.png",
+    "19": "icons/c19.png",
+    "32": "icons/c32.png",
+    "48": "icons/c48.png",
+    "64": "icons/c64.png",
+    "128": "icons/c128.png"
   },
 
   "permissions": [
@@ -23,15 +28,15 @@
   },
 
   "browser_action": {
-    "default_icon": "icons/cl32-inactive.png",
+    "default_icon": "icons/c48.png",
     "default_title": "Clickloader (inactive)"
   },
 
   "commands": {
     "_execute_browser_action": {
       "suggested_key": {
-        "default": "Ctrl+Alt+S",
-        "mac": "MacCtrl+Alt+S"
+        "windows": "Ctrl+Shift+1",
+        "mac": "Ctrl+Shift+1"
       }
     }
   },
