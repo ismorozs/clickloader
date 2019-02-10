@@ -3,8 +3,6 @@
   window.hasRun = true;
   window.active = false;
 
-  const SELECTORS = ['img', 'audio', 'video'];
-
   const SPECIAL_CASES = {
     'www.instagram.com': {
       'div._9AhH0': (el) => ({
@@ -20,11 +18,6 @@
 
   const SITE_SPECIAL_CASES = SPECIAL_CASES[window.location.hostname];
 
-  if (SITE_SPECIAL_CASES) {
-    const specialSelectors = Object.keys(SITE_SPECIAL_CASES)
-    SELECTORS.splice.apply(SELECTORS, [0, 0].concat(specialSelectors))
-  }
-
   browser.runtime.onMessage.addListener(onMessage);
 
   function onMessage (message) {
@@ -38,8 +31,7 @@
 
   function switchClickHandler (data) {
     const operation = data.activate ? 'add' : 'remove';
-    document.querySelectorAll(SELECTORS.join(', '))
-      .forEach((el) => window[operation + 'EventListener']('contextmenu', sendImageUrl));
+    window[operation + 'EventListener']('contextmenu', sendImageUrl)
   }
 
   function sendImageUrl (e) {
