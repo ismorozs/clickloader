@@ -2,9 +2,9 @@
 
   "manifest_version": 2,
   "name": "Clickloader",
-  "version": "1.0.9",
+  "version": "1.0.10",
 
-  "description": "Simple extension for downloading media content by just right-clicking on it",
+  "description": "Simple extension for downloading media content by just clicking on it",
   "homepage_url": "https://github.com/ismorozs/clickloader",
 
   "icons": {

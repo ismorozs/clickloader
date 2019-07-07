@@ -1,76 +1,117 @@
 const CONTENT_SCRIPT_PATH = '/content_scripts/main.js';
-const CONTENT_SCRIPT_ACTION = 'switchClickHandler';
-const DOWNLOAD_NOTIFICATION_PREFIX = '_dn';
 const EXTENSION_NAME = 'Clickloader';
 
-const STATE = {
+const DEFAULT_SETTINGS = {
   active: false,
-  saveFolder: EXTENSION_NAME
+  saveFolder: EXTENSION_NAME + '/',
+  saveMethod: 'contextmenu',
 };
+
+const EVENT_MEANINGS = {
+  contextmenu: 'Right-click',
+  dblclick: 'Double-click',
+  mousedown: 'Shift + Left-click',
+};
+
+const STATE = {};
+
+const STATES_ON_TABS = {};
 
 browser.browserAction.setBadgeBackgroundColor({ color: 'green' });
 browser.storage.onChanged.addListener(onStorageChange);
-browser.tabs.onUpdated.addListener(onTabsUpdate);
+browser.tabs.onRemoved.addListener(onTabRemoved);
+browser.tabs.onUpdated.addListener(onTabUpdated);
 browser.runtime.onMessage.addListener(onMessage);
 browser.browserAction.onClicked.addListener(onClicked);
 
-loadSettings().then(() => {
-  browser.tabs.query({}).then((tabs) =>
-    tabs.forEach((tab) =>
-      browser.tabs.executeScript(tab.id, { file: CONTENT_SCRIPT_PATH })));
-});
+loadSettings();
 
 function loadSettings () {
-  return browser.storage.local.get().then((values) => {
+  return browser.storage.local.get().then((savedOptions) => {
 
-    if (typeof values.saveFolder === 'undefined') {
-      values.saveFolder = EXTENSION_NAME;
-      browser.storage.local.set({ saveFolder: values.saveFolder });
+    for (let key in DEFAULT_SETTINGS) {
+      if (typeof savedOptions[key] === 'undefined') {
+        savedOptions[key] = DEFAULT_SETTINGS[key];
+        browser.storage.local.set({ [key]: savedOptions[key] });
+      }
     }
 
-    STATE.saveFolder = values.saveFolder;
+    Object.assign(STATE, savedOptions);
   });
 }
 
-function onTabsUpdate (tabId, changeInfo, tab) {
-  if (tab.status === 'complete') {
-    browser.tabs.executeScript(tab.id, { file: CONTENT_SCRIPT_PATH })
-      .then(() => browser.tabs.sendMessage(tab.id, { action: CONTENT_SCRIPT_ACTION, senderId: browser.runtime.id, activate: STATE.active }));
+function onTabUpdated (tabId, changeInfo, tab) {
+  if (tab.active && tab.status === 'complete') {
+    runUserScript(tab, STATE.active, STATE.saveMethod);
   }
+}
+
+function onTabRemoved (tabId) {
+  STATES_ON_TABS[tabId] = undefined;
+}
+
+function runUserScript (tab, active, saveMethod) {
+  let executeScript = Promise.resolve();
+  let sendMessage = () => {};
+
+  const stateOnTab = STATES_ON_TABS[tab.id];
+  if (!stateOnTab || stateOnTab.url !== tab.url) {
+
+    if (!STATE.active) {
+      return;
+    }
+
+    executeScript = browser.tabs.executeScript(tab.id, { file: CONTENT_SCRIPT_PATH });
+  }
+
+  if (!stateOnTab || stateOnTab.url !== tab.url || stateOnTab.active !== active || stateOnTab.saveMethod !== saveMethod) {
+    sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active, saveMethod });
+  }
+
+  STATES_ON_TABS[tab.id] = { active, saveMethod, url: tab.url };
+
+  executeScript.then(sendMessage);
 }
 
 function onMessage (data) {
-  if (data.senderId === browser.runtime.id) {
-    const imgName = data.src.split('//')[1].replace(/[/\\?%*:|"<>]/g, '_');
-    browser.downloads.download({
-      url: data.src,
-      saveAs: false,
-      filename: STATE.saveFolder + '/' + imgName + data.extension
-    });
-  }
+  const imgName = data.src.split('//')[1].replace(/[/\\?%*:|"<>]/g, '_');
+  browser.downloads.download({
+    url: data.src,
+    saveAs: false,
+    filename: STATE.saveFolder + imgName + data.extension
+  });
+}
+
+function getCurrentTab () {
+  return browser.tabs.query({ active: true, currentWindow: true });
 }
 
 function onClicked () {
-  switchIcon(STATE.active);
-  switchClickHandler(STATE.active);
   STATE.active = !STATE.active;
+  switchIcon(STATE.active);
+  getCurrentTab().then((tabs) => runUserScript(tabs[0], STATE.active, STATE.saveMethod));
 }
 
-function switchIcon (bool) {
-  const status = bool ? 'inactive' : 'active';
+function switchIcon (active) {
+  browser.browserAction.setBadgeText({ text: active ? 'A' : '' });
 
-  browser.browserAction.setBadgeText({ text: bool ? '' : 'A' });
-  browser.browserAction.setTitle({ title: EXTENSION_NAME + ' (' + status + ')' });
-}
+  const status = active ? 'active' : 'inactive';
+  const title = [ EXTENSION_NAME + ' (' + status + ')' ];
 
-function switchClickHandler (active) {
-  browser.tabs.query({}).then((tabs) =>
-      tabs.forEach((tab) =>
-        browser.tabs.sendMessage(tab.id, { action: CONTENT_SCRIPT_ACTION, senderId: browser.runtime.id, activate: !active })));
+  if (active) {
+    title.push(
+      'Save folder: ' + STATE.saveFolder,
+      'Save method: ' + EVENT_MEANINGS[ STATE.saveMethod ],
+    );
+  }
+  
+  browser.browserAction.setTitle({ title: title.join('\n') });
 }
 
 function onStorageChange (changes) {
   for (let key in changes) {
     STATE[key] = changes[key].newValue;
   }
+
+  switchIcon(STATE.active);
 }

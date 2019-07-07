@@ -8,18 +8,28 @@
 
   <body>
     <h3>Settings</h1>
-    <form id="form">
+    <form class="form">
       <table>
         <tbody>
           <tr>
-            <td class="option-name">Save folder</td>
-            <td><input type='text' id='saveFolder' name='saveFolder' /></td>
+            <td class="option-name">Save folder:</td>
+            <td><input type='text' class='saveFolder' name='saveFolder' /> (relative to the default save folder)</td>
+          </tr>
+          <tr>
+            <td class="option-name">Save method:</td>
+            <td>
+              <select class='saveMethod' name='saveMethod' />
+                <option value="contextmenu">Right-click</option>
+                <option value="mousedown">Shift + Left-click</option>
+                <option value="dblclick">Double-click</option>
+              </select>
+            </td>
           </tr>
         </tbody>
       </table>
     </form>
 
-    <button id="save">Save</button><button id="defaults">Defaults</button>
+    <button class="save">Save</button><button class="defaults">Defaults</button>
 
     <script type="text/javascript" src="options.js"></script>
   </body>
