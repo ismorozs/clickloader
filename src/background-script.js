@@ -1,19 +1,14 @@
-const CONTENT_SCRIPT_PATH = '/content_scripts/main.js';
-const EXTENSION_NAME = 'Clickloader';
+import { removeForbiddenCharacters } from './helpers';
 
-const DEFAULT_SETTINGS = {
+import {
+  EXTENSION_NAME,
+  DEFAULT_SETTINGS,
+  EVENT_MEANINGS,
+} from './values';
+
+const STATE = {
   active: false,
-  saveFolder: EXTENSION_NAME + '/',
-  saveMethod: 'contextmenu',
 };
-
-const EVENT_MEANINGS = {
-  contextmenu: 'Right-click',
-  dblclick: 'Double-click',
-  mousedown: 'Shift + Left-click',
-};
-
-const STATE = {};
 
 const STATES_ON_TABS = {};
 
@@ -61,7 +56,7 @@ function runUserScript (tab, active, saveMethod) {
       return;
     }
 
-    executeScript = browser.tabs.executeScript(tab.id, { file: CONTENT_SCRIPT_PATH });
+    executeScript = browser.tabs.executeScript(tab.id, { file: '/page-script.js' });
   }
 
   if (!stateOnTab || stateOnTab.url !== tab.url || stateOnTab.active !== active || stateOnTab.saveMethod !== saveMethod) {
@@ -74,7 +69,7 @@ function runUserScript (tab, active, saveMethod) {
 }
 
 function onMessage (data) {
-  const imgName = data.src.split('//')[1].replace(/[/\\?%*:|"<>]/g, '_');
+  const imgName = removeForbiddenCharacters(data.src.split('//')[1], true);
   browser.downloads.download({
     url: data.src,
     saveAs: false,

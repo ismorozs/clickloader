@@ -1,18 +1,4 @@
-window.active = false;
-window.saveMethod = 'contextmenu';
-
-const SPECIAL_CASES = {
-  'www.instagram.com': {
-    'div._9AhH0': (el) => ({
-      src: el.previousElementSibling.firstElementChild.src,
-      extension: '.jpg'
-    }),
-    'img._6q-tv': (el) => ({
-      src: el.src,
-      extension: '.jpg'
-    })
-  }
-}
+import SPECIAL_CASES from './specialSaveCases';
 
 const SITE_SPECIAL_CASES = SPECIAL_CASES[window.location.hostname];
 
@@ -20,7 +6,6 @@ browser.runtime.onMessage.addListener(onMessage);
 
 function onMessage (message) {
   switchClickHandler(message);
-  window.active = message.active;
   window.saveMethod = message.saveMethod;
 }
 

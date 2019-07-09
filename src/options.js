@@ -1,8 +1,10 @@
-const SETTINGS = {
+import { removeForbiddenCharacters } from './helpers';
+import { EVENT_MEANINGS, DEFAULT_SETTINGS } from './values';
+
+const FIELDS = {
   saveFolder: {
-    default: 'Clickloader/',
     prepare: (val) => {
-      let saveFolder = val.replace(/[\.\\?%*:|"<>]/g, '_').replace(/\/+/g, '/').replace(/\/$/, '');
+      let saveFolder = removeForbiddenCharacters(val).replace(/\/+/g, '/').replace(/\/$/, '');
 
       if (saveFolder.length) {
         saveFolder += '/';
@@ -11,24 +13,32 @@ const SETTINGS = {
       return saveFolder;
     }
   },
-  saveMethod: { default: 'contextmenu', prepare: (val) => val },
+  saveMethod: { prepare: (val) => val, options: EVENT_MEANINGS },
 };
 
 browser.storage.onChanged.addListener((changes) => {
   for (let key in changes) {
-    if (SETTINGS[key]) {
+    if (FIELDS[key]) {
       document.querySelector('.' + key).value = changes[key].newValue;
     }
   }
 });
 
 function setupInterface () {
-  const settingsKeys = Object.keys(SETTINGS);
+  const settingsKeys = Object.keys(FIELDS);
 
   browser.storage.local.get(settingsKeys)
     .then((values) => {
       for (let key in values) {
-        document.querySelector('.' + key).value = values[key];
+        const field = FIELDS[key];
+        const el = document.querySelector('.' + key);
+
+        if (field.options) {
+          appendOptions(el, field.options);
+        }
+        
+        field.default = DEFAULT_SETTINGS[key].default;
+        el.value = values[key];
       }
     });
 }
@@ -47,8 +57,8 @@ function saveSettings (e) {
   const form = document.querySelector('.form');
 
   const NEW_SETTINGS = {};
-  for (let key in SETTINGS) {
-    const newValue = SETTINGS[key].prepare( form.elements[key].value );
+  for (let key in FIELDS) {
+    const newValue = FIELDS[key].prepare( form.elements[key].value );
     NEW_SETTINGS[key] =  newValue;
   }
 
@@ -56,10 +66,14 @@ function saveSettings (e) {
 }
 
 function resetToDefaults () {
-  const DEFAULT_SETTINGS = {};
-  for (let key in SETTINGS) {
-    DEFAULT_SETTINGS[key] = SETTINGS[key].default;
-  }
-
   browser.storage.local.set(DEFAULT_SETTINGS);
+}
+
+function appendOptions (select, options) {
+  for (let value in options) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.appendChild( document.createTextNode(options[value]) );
+    select.appendChild(option);
+  }
 }
