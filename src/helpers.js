@@ -1,7 +1,7 @@
-export function removeForbiddenCharacters (str, forFile) {
+export function removeForbiddenCharacters (str, isFileName) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
-    forFile ? '\\/' : '\\.',
+    isFileName ? '\\/' : '\\.',
     ']'
   ].join('');
 

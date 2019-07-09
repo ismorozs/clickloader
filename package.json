@@ -1,8 +1,6 @@
 {
   "name": "clickloader",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "scripts": {
     "start": "webpack"
   },
@@ -10,13 +8,14 @@
     "type": "git",
     "url": "git+https://github.com/ismorozs/clickloader.git"
   },
-  "author": "Igor Morozov",
+  "author": "Igor Morozov <ismorozs@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/ismorozs/clickloader/issues"
   },
   "homepage": "https://github.com/ismorozs/clickloader#readme",
   "devDependencies": {
+    "webextension-polyfill": "0.4.0",
     "webpack": "4.35.3",
     "webpack-cli": "3.3.5"
   }

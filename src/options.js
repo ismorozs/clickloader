@@ -1,3 +1,5 @@
+const browser = require('webextension-polyfill');
+
 import { removeForbiddenCharacters } from './helpers';
 import { EVENT_MEANINGS, DEFAULT_SETTINGS } from './values';
 

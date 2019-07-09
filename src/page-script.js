@@ -1,3 +1,5 @@
+const browser = require("webextension-polyfill/dist/browser-polyfill.min");
+
 import SPECIAL_CASES from './specialSaveCases';
 
 const SITE_SPECIAL_CASES = SPECIAL_CASES[window.location.hostname];

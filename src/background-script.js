@@ -1,3 +1,5 @@
+const browser = require('webextension-polyfill');
+
 import { removeForbiddenCharacters } from './helpers';
 
 import {
@@ -15,6 +17,7 @@ const STATES_ON_TABS = {};
 browser.browserAction.setBadgeBackgroundColor({ color: 'green' });
 browser.storage.onChanged.addListener(onStorageChange);
 browser.tabs.onRemoved.addListener(onTabRemoved);
+browser.tabs.onActivated.addListener(onTabActivated);
 browser.tabs.onUpdated.addListener(onTabUpdated);
 browser.runtime.onMessage.addListener(onMessage);
 browser.browserAction.onClicked.addListener(onClicked);
@@ -35,7 +38,16 @@ function loadSettings () {
   });
 }
 
+function onTabActivated (data) {
+  const url = STATES_ON_TABS[data.tabId] && STATES_ON_TABS[data.tabId].url;
+  runUserScript({ id: data.tabId, url }, STATE.active, STATE.saveMethod);
+}
+
 function onTabUpdated (tabId, changeInfo, tab) {
+  if (tab.status === 'loading') {
+    STATES_ON_TABS[tabId] = undefined;
+  }
+
   if (tab.active && tab.status === 'complete') {
     runUserScript(tab, STATE.active, STATE.saveMethod);
   }
