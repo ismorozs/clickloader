@@ -122,9 +122,13 @@ const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyf
 
 
 
-const SITE_SPECIAL_CASES = _specialSaveCases__WEBPACK_IMPORTED_MODULE_0__["default"][window.location.hostname];
+if (!window.hasRun) {
+  window.hasRun = true;
 
-browser.runtime.onMessage.addListener(onMessage);
+  browser.runtime.onMessage.addListener(onMessage);
+}
+
+const SITE_SPECIAL_CASES = _specialSaveCases__WEBPACK_IMPORTED_MODULE_0__["default"][window.location.hostname];
 
 function onMessage (message) {
   switchClickHandler(message);

@@ -1289,10 +1289,10 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeForbiddenCharacters", function() { return removeForbiddenCharacters; });
-function removeForbiddenCharacters (str, forFile) {
+function removeForbiddenCharacters (str, isFileName) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
-    forFile ? '\\/' : '\\.',
+    isFileName ? '\\/' : '\\.',
     ']'
   ].join('');
 

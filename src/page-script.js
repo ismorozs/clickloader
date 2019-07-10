@@ -2,9 +2,13 @@ const browser = require("webextension-polyfill/dist/browser-polyfill.min");
 
 import SPECIAL_CASES from './specialSaveCases';
 
-const SITE_SPECIAL_CASES = SPECIAL_CASES[window.location.hostname];
+if (!window.hasRun) {
+  window.hasRun = true;
 
-browser.runtime.onMessage.addListener(onMessage);
+  browser.runtime.onMessage.addListener(onMessage);
+}
+
+const SITE_SPECIAL_CASES = SPECIAL_CASES[window.location.hostname];
 
 function onMessage (message) {
   switchClickHandler(message);

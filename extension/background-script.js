@@ -1327,15 +1327,17 @@ function loadSettings () {
 }
 
 function onTabActivated (data) {
-  const url = STATES_ON_TABS[data.tabId] && STATES_ON_TABS[data.tabId].url;
-  runUserScript({ id: data.tabId, url }, STATE.active, STATE.saveMethod);
+  const tabData = STATES_ON_TABS[ data.tabId ];
+  let getTab = Promise.resolve(tabData);
+
+  if (!tabData) {
+    getTab = getCurrentTab();
+  }
+
+  getTab.then((tab) => runUserScript(tab, STATE.active, STATE.saveMethod));
 }
 
 function onTabUpdated (tabId, changeInfo, tab) {
-  if (tab.status === 'loading') {
-    STATES_ON_TABS[tabId] = undefined;
-  }
-
   if (tab.active && tab.status === 'complete') {
     runUserScript(tab, STATE.active, STATE.saveMethod);
   }
@@ -1346,14 +1348,18 @@ function onTabRemoved (tabId) {
 }
 
 function runUserScript (tab, active, saveMethod) {
+  if (tab.url.indexOf('http') !== 0) {
+    return !active;
+  }
+
   let executeScript = Promise.resolve();
   let sendMessage = () => {};
 
   const stateOnTab = STATES_ON_TABS[tab.id];
   if (!stateOnTab || stateOnTab.url !== tab.url) {
 
-    if (!STATE.active) {
-      return;
+    if (!STATE.active && !active) {
+      return !active;
     }
 
     executeScript = browser.tabs.executeScript(tab.id, { file: '/page-script.js' });
@@ -1363,9 +1369,10 @@ function runUserScript (tab, active, saveMethod) {
     sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active, saveMethod });
   }
 
-  STATES_ON_TABS[tab.id] = { active, saveMethod, url: tab.url };
+  STATES_ON_TABS[tab.id] = { id: tab.id, active, saveMethod, url: tab.url };
 
   executeScript.then(sendMessage);
+  return active;
 }
 
 function onMessage (data) {
@@ -1378,13 +1385,16 @@ function onMessage (data) {
 }
 
 function getCurrentTab () {
-  return browser.tabs.query({ active: true, currentWindow: true });
+  return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => tabs[0]);
 }
 
 function onClicked () {
-  STATE.active = !STATE.active;
-  switchIcon(STATE.active);
-  getCurrentTab().then((tabs) => runUserScript(tabs[0], STATE.active, STATE.saveMethod));
+  getCurrentTab()
+    .then((tab) => {
+      const active = runUserScript(tab, !STATE.active, STATE.saveMethod);
+      STATE.active = active;
+      switchIcon(active);
+    });
 }
 
 function switchIcon (active) {
@@ -1424,10 +1434,10 @@ function onStorageChange (changes) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeForbiddenCharacters", function() { return removeForbiddenCharacters; });
-function removeForbiddenCharacters (str, forFile) {
+function removeForbiddenCharacters (str, isFileName) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
-    forFile ? '\\/' : '\\.',
+    isFileName ? '\\/' : '\\.',
     ']'
   ].join('');
 
