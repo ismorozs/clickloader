@@ -1,5 +1,5 @@
-# Clickloader
-This repository contains source code for [Firefox browser extension](https://addons.mozilla.org/en-US/firefox/addon/clickloader/).
+# Save on Click
+This repository contains source code for [Firefox browser extension](https://addons.mozilla.org/ru/firefox/addon/save_on_click/).
 
 
 For Chromium-based browsers (Chromium, Chrome, Opera, etc)  installation can be done manually with such steps:

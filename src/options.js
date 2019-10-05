@@ -1,81 +1,105 @@
 const browser = require('webextension-polyfill');
 
+import State from './background/state';
 import { removeForbiddenCharacters } from './helpers';
-import { EVENT_MEANINGS, DEFAULT_SETTINGS } from './values';
 
-const FIELDS = {
-  saveFolder: {
-    prepare: (val) => {
-      let saveFolder = removeForbiddenCharacters(val).replace(/\/+/g, '/').replace(/\/$/, '');
+const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
+const FOLDERS_LIST = document.querySelector('.saveFolders');
 
-      if (saveFolder.length) {
-        saveFolder += '/';
-      }
+FOLDERS_LIST.addEventListener('click', (e) => handleFolder(e));
+document.querySelector('.addNew').addEventListener('click', (e) => saveNewFolder(e));
 
-      return saveFolder;
+browser.storage.onChanged.addListener(onStorageChange);
+
+State.loadSettings().then(setupFoldersList);
+
+async function setupFoldersList({ saveFolders }) {
+  emptyNode(FOLDERS_LIST);
+
+  saveFolders.forEach((folder, i) => {
+    if (!i) {
+      return;
     }
-  },
-  saveMethod: { prepare: (val) => val, options: EVENT_MEANINGS },
-};
 
-browser.storage.onChanged.addListener((changes) => {
+    const item = document.createElement('li');
+    const folderPath = createElement('span', '/' + folder, ['folderPath']);
+    const editButton = createElement('button', 'Edit', ['edit']);
+    editButton.dataset.folder = folder;
+    const removeButton = createElement('button', 'Forget', ['remove']);
+    removeButton.dataset.folder = folder;
+    item.appendChild(folderPath);
+    item.appendChild(editButton);
+    item.appendChild(removeButton);
+
+    FOLDERS_LIST.appendChild(item);
+  });
+}
+
+function createElement (type, text, classNames) {
+  const button = document.createElement(type);
+  button.appendChild( document.createTextNode(text) );
+  button.classList.add(...classNames);
+  return button;
+}
+
+function emptyNode (node) {
+  while (node.hasChildNodes()) {
+    node.removeChild(node.firstChild);
+  }
+}
+
+function saveNewFolder () {
+  let newFolder = NEW_FOLDER_INPUT.value;
+  newFolder = removeForbiddenCharacters(newFolder).replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
+
+  if (newFolder.length) {
+    newFolder += '/';
+  }
+
+  const saveFolders = State.saveFolders();
+
+  if (!saveFolders.includes(newFolder)) {
+    saveFolders.push(newFolder);
+    saveFolders.sort();
+  }
+
+  browser.storage.local.set({ saveFolders, saveFolder: newFolder });
+
+  NEW_FOLDER_INPUT.value = '';
+}
+
+function handleFolder (e) {
+  const el = e.target;
+
+  if (el.classList.contains('edit')) {
+    editFolder( el.dataset.folder );
+    return;
+  }
+
+  if (el.classList.contains('remove')) {
+    removeFolder( el.dataset.folder );
+  }
+}
+
+function editFolder (folder) {
+  NEW_FOLDER_INPUT.value = folder;
+  setTimeout(() => NEW_FOLDER_INPUT.focus());
+}
+
+function removeFolder (folder) {
+  const saveFolders = State.saveFolders();
+  saveFolders.splice( saveFolders.indexOf(folder), 1 );
+
+  const saveFolder = folder === State.saveFolder() ? State.rootFolder() : State.saveFolder();
+  
+  browser.storage.local.set({ saveFolders, saveFolder });
+}
+
+function onStorageChange (changes) {
   for (let key in changes) {
-    if (FIELDS[key]) {
-      document.querySelector('.' + key).value = changes[key].newValue;
+    State[key](changes[key].newValue);
+    if (key === 'saveFolders') {
+      setupFoldersList({ saveFolders: changes[key].newValue });
     }
-  }
-});
-
-function setupInterface () {
-  const settingsKeys = Object.keys(FIELDS);
-
-  browser.storage.local.get(settingsKeys)
-    .then((values) => {
-      for (let key in values) {
-        const field = FIELDS[key];
-        const el = document.querySelector('.' + key);
-
-        if (field.options) {
-          appendOptions(el, field.options);
-        }
-        
-        field.default = DEFAULT_SETTINGS[key].default;
-        el.value = values[key];
-      }
-    });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  setupInterface();
-
-  document.querySelector('.save').addEventListener('click', (e) => saveSettings(e));
-  document.querySelector('.defaults').addEventListener('click', resetToDefaults);
-
-});
-
-function saveSettings (e) {
-  e.preventDefault();
-
-  const form = document.querySelector('.form');
-
-  const NEW_SETTINGS = {};
-  for (let key in FIELDS) {
-    const newValue = FIELDS[key].prepare( form.elements[key].value );
-    NEW_SETTINGS[key] =  newValue;
-  }
-
-  browser.storage.local.set(NEW_SETTINGS);
-}
-
-function resetToDefaults () {
-  browser.storage.local.set(DEFAULT_SETTINGS);
-}
-
-function appendOptions (select, options) {
-  for (let value in options) {
-    const option = document.createElement('option');
-    option.value = value;
-    option.appendChild( document.createTextNode(options[value]) );
-    select.appendChild(option);
   }
 }

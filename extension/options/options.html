@@ -4,28 +4,17 @@
   <head>
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="options.css"/>
-    <title>Clickloader Options</title>
+    <title>Save on Click Options</title>
+    <link rel="icon" type="image/png" href="/icons/32.png">
   </head>
 
   <body>
-    <h3>Settings</h1>
+    <h1>Save folders <span>(relative to the default save folder)</span></h1>
     <form class="form">
-      <table>
-        <tbody>
-          <tr>
-            <td class="option-name">Save folder:</td>
-            <td><input type='text' class='saveFolder' name='saveFolder' /> (relative to the default save folder)</td>
-          </tr>
-          <tr>
-            <td class="option-name">Save method:</td>
-            <td><select class='saveMethod' name='saveMethod' /></select></td>
-          </tr>
-        </tbody>
-      </table>
+      <input type="text" class="newFolder"><button class="addNew">Add new</button>
     </form>
 
-    <button class="save">Save</button><button class="defaults">Defaults</button>
-
+    <ul class="saveFolders"></ul>
     <script type="text/javascript" src="options.js"></script>
   </body>
 </html>

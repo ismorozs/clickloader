@@ -1,49 +1,30 @@
 {
-
   "manifest_version": 2,
-  "name": "Clickloader",
-  "version": "1.1.1",
+  "name": "Save on Click",
+  "version": "1.1.2",
 
-  "description": "Simple extension for downloading media content by just clicking on it",
+  "description": "Simple extension for downloading pictures and other media content by just clicking on them",
   "homepage_url": "https://github.com/ismorozs/clickloader",
 
   "icons": {
-    "16": "icons/c16.png",
-    "19": "icons/c19.png",
-    "32": "icons/c32.png",
-    "48": "icons/c48.png",
-    "64": "icons/c64.png",
-    "128": "icons/c128.png"
+    "16": "icons/16.png",
+    "19": "icons/19.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "64": "icons/64.png",
+    "128": "icons/128.png"
   },
 
   "permissions": [
     "<all_urls>",
     "tabs",
     "downloads",
-    "storage"
+    "storage",
+    "contextMenus"
   ],
 
   "background": {
     "scripts": ["background-script.js"]
-  },
-
-  "browser_action": {
-    "default_icon": "icons/c48.png",
-    "default_title": "Clickloader (inactive)"
-  },
-
-  "commands": {
-    "_execute_browser_action": {
-      "suggested_key": {
-        "windows": "Ctrl+Shift+1",
-        "mac": "Ctrl+Shift+1"
-      }
-    }
-  },
-
-  "options_ui": {
-    "page": "options/options.html",
-    "open_in_tab": true
   },
 
   "author": "Igor Morozov"

@@ -1288,138 +1288,316 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _helpers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers */ "./src/helpers.js");
-/* harmony import */ var _values__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./values */ "./src/values.js");
+/* harmony import */ var _background_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./background/state */ "./src/background/state.js");
+/* harmony import */ var _background_actions__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./background/actions */ "./src/background/actions.js");
+/* harmony import */ var _background_context_menu__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./background/context-menu */ "./src/background/context-menu.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
 
 
 
 
-const STATE = {
-  active: false,
-};
-
-const STATES_ON_TABS = {};
-
-browser.browserAction.setBadgeBackgroundColor({ color: 'green' });
 browser.storage.onChanged.addListener(onStorageChange);
 browser.tabs.onRemoved.addListener(onTabRemoved);
 browser.tabs.onActivated.addListener(onTabActivated);
 browser.tabs.onUpdated.addListener(onTabUpdated);
-browser.runtime.onMessage.addListener(onMessage);
-browser.browserAction.onClicked.addListener(onClicked);
+browser.runtime.onMessage.addListener(_background_actions__WEBPACK_IMPORTED_MODULE_1__["saveContent"]);
+browser.contextMenus.onClicked.addListener(_background_context_menu__WEBPACK_IMPORTED_MODULE_2__["onContextMenuClicked"]);
 
-loadSettings();
-
-function loadSettings () {
-  return browser.storage.local.get().then((savedOptions) => {
-
-    for (let key in _values__WEBPACK_IMPORTED_MODULE_1__["DEFAULT_SETTINGS"]) {
-      if (typeof savedOptions[key] === 'undefined') {
-        savedOptions[key] = _values__WEBPACK_IMPORTED_MODULE_1__["DEFAULT_SETTINGS"][key];
-        browser.storage.local.set({ [key]: savedOptions[key] });
-      }
-    }
-
-    Object.assign(STATE, savedOptions);
-  });
-}
+_background_state__WEBPACK_IMPORTED_MODULE_0__["default"].loadSettings().then(_background_context_menu__WEBPACK_IMPORTED_MODULE_2__["setupContextMenu"]);
 
 function onTabActivated (data) {
-  const tabData = STATES_ON_TABS[ data.tabId ];
-  let getTab = Promise.resolve(tabData);
-
-  if (!tabData) {
-    getTab = getCurrentTab();
-  }
-
-  getTab.then((tab) => runUserScript(tab, STATE.active, STATE.saveMethod));
+  const tabData = _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(data.tabId);
+  Object(_background_actions__WEBPACK_IMPORTED_MODULE_1__["runUserScript"])(_background_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveMethod(), tabData);
 }
 
 function onTabUpdated (tabId, changeInfo, tab) {
   if (tab.active && tab.status === 'complete') {
-    runUserScript(tab, STATE.active, STATE.saveMethod);
+    Object(_background_actions__WEBPACK_IMPORTED_MODULE_1__["runUserScript"])(_background_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveMethod(), tab);
   }
 }
 
 function onTabRemoved (tabId) {
-  STATES_ON_TABS[tabId] = undefined;
+  _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tabId, undefined);
 }
 
-function runUserScript (tab, active, saveMethod) {
-  if (tab.url.indexOf('http') !== 0) {
-    return !active;
+function onStorageChange (changes) {
+  _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].updateFromStorage(changes);
+  
+  Object(_background_context_menu__WEBPACK_IMPORTED_MODULE_2__["setupContextMenu"])( _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].getContextMenuState() );
+}
+
+
+/***/ }),
+
+/***/ "./src/background/actions.js":
+/*!***********************************!*\
+  !*** ./src/background/actions.js ***!
+  \***********************************/
+/*! exports provided: runUserScript, saveContent */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "runUserScript", function() { return runUserScript; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "saveContent", function() { return saveContent; });
+/* harmony import */ var _state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./state */ "./src/background/state.js");
+/* harmony import */ var _helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers */ "./src/helpers.js");
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
+
+
+
+async function runUserScript (newActiveState, newSaveMethod, tab) {
+  if (!tab) {
+    tab = await Object(_helpers__WEBPACK_IMPORTED_MODULE_1__["getCurrentTab"])();
+  }
+  
+  if (!Object(_helpers__WEBPACK_IMPORTED_MODULE_1__["isHTTPUrl"])(tab.url)) {
+    return !newActiveState;
   }
 
   let executeScript = Promise.resolve();
   let sendMessage = () => {};
 
-  const stateOnTab = STATES_ON_TABS[tab.id];
+  const stateOnTab = _state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tab.id);
   if (!stateOnTab || stateOnTab.url !== tab.url) {
 
-    if (!STATE.active && !active) {
-      return !active;
+    if (!_state__WEBPACK_IMPORTED_MODULE_0__["default"].active() && !newActiveState) {
+      return false;
     }
 
     executeScript = browser.tabs.executeScript(tab.id, { file: '/page-script.js' });
   }
 
-  if (!stateOnTab || stateOnTab.url !== tab.url || stateOnTab.active !== active || stateOnTab.saveMethod !== saveMethod) {
-    sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active, saveMethod });
+  if (!stateOnTab || stateOnTab.url !== tab.url || stateOnTab.active !== newActiveState || stateOnTab.saveMethod !== newSaveMethod) {
+    sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active: newActiveState, saveMethod: newSaveMethod });
   }
 
-  STATES_ON_TABS[tab.id] = { id: tab.id, active, saveMethod, url: tab.url };
+  _state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tab.id, { id: tab.id, active: newActiveState, saveMethod: newSaveMethod, url: tab.url });
 
   executeScript.then(sendMessage);
-  return active;
+  return newActiveState;
 }
 
-function onMessage (data) {
-  const imgName = Object(_helpers__WEBPACK_IMPORTED_MODULE_0__["removeForbiddenCharacters"])(data.src.split('//')[1], true);
+function saveContent ({ src, extension }) {
+  const imgName = Object(_helpers__WEBPACK_IMPORTED_MODULE_1__["removeForbiddenCharacters"])(src.split('//')[1], true);
   browser.downloads.download({
-    url: data.src,
+    url: src,
     saveAs: false,
-    filename: STATE.saveFolder + imgName + data.extension
+    filename: _state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder() + imgName + extension
   });
 }
 
-function getCurrentTab () {
-  return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => tabs[0]);
+
+/***/ }),
+
+/***/ "./src/background/context-menu.js":
+/*!****************************************!*\
+  !*** ./src/background/context-menu.js ***!
+  \****************************************/
+/*! exports provided: setupContextMenu, onContextMenuClicked */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setupContextMenu", function() { return setupContextMenu; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "onContextMenuClicked", function() { return onContextMenuClicked; });
+/* harmony import */ var _state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./state */ "./src/background/state.js");
+/* harmony import */ var _actions__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./actions */ "./src/background/actions.js");
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
+
+
+
+const SETTINGS_PAGE_URL = '/options/options.html';
+
+const EVENT_MEANINGS = {
+  contextmenu: 'Right-click',
+  mousedown: 'Shift + Left-click',
+  dblclick: 'Double-click',
+};
+
+const CONTEXT_MENU = {
+  MAIN: { ID: 'MAIN', TITLE: (bool) => 'Save on Click' + (bool ? ' (active)' : '') },
+  SWITCH: { ID: 'S', TITLE: (bool) => bool ? 'Disable' : 'Enable' },
+  FOLDER_SUBMENU: { ID: 'F', TITLE: (currentFolder) => 'Save folder: /' + currentFolder },
+  MANAGE_FOLDERS: { ID: 'N', TITLE: 'Manage folders' },
+  METHOD_SUBMENU: { ID: 'M', TITLE: (currentMethod) => 'Save method: ' + EVENT_MEANINGS[currentMethod] },
+};
+
+function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod }) {
+  browser.contextMenus.removeAll().then(() => {
+    browser.contextMenus.create({ id: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.MAIN.TITLE(active), contexts: ["all"] });
+    browser.contextMenus.create({ id: CONTEXT_MENU.SWITCH.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.SWITCH.TITLE(active), contexts: ["all"] });
+    browser.contextMenus.create({ parentId: CONTEXT_MENU.MAIN.ID, type: 'separator' });
+
+    setupFolderSubmenu(saveFolders, saveFolder);
+    setupMethodSubmenu(saveMethod);
+  });
 }
 
-function onClicked () {
-  getCurrentTab()
-    .then((tab) => {
-      const active = runUserScript(tab, !STATE.active, STATE.saveMethod);
-      STATE.active = active;
-      switchIcon(active);
-    });
+function setupMethodSubmenu (currentSaveMethod) {
+  browser.contextMenus.create({ id: CONTEXT_MENU.METHOD_SUBMENU.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.METHOD_SUBMENU.TITLE(currentSaveMethod), contexts: ["all"] });
+
+  Object.keys(EVENT_MEANINGS).forEach((method, i) => {
+    const title = EVENT_MEANINGS[method];
+    const isActive = method === currentSaveMethod;
+    browser.contextMenus.create({ id: CONTEXT_MENU.METHOD_SUBMENU.ID + i, parentId: CONTEXT_MENU.METHOD_SUBMENU.ID, title, contexts: ["all"], type: 'radio', checked: isActive });
+  }); 
 }
 
-function switchIcon (active) {
-  browser.browserAction.setBadgeText({ text: active ? 'A' : '' });
+function setupFolderSubmenu (saveFolders, currentSaveFolder) {
+  browser.contextMenus.create({ id: CONTEXT_MENU.FOLDER_SUBMENU.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.FOLDER_SUBMENU.TITLE(currentSaveFolder), contexts: ["all"] });
 
-  const status = active ? 'active' : 'inactive';
-  const title = [ _values__WEBPACK_IMPORTED_MODULE_1__["EXTENSION_NAME"] + ' (' + status + ')' ];
+  browser.contextMenus.create({ id: CONTEXT_MENU.MANAGE_FOLDERS.ID, parentId: CONTEXT_MENU.FOLDER_SUBMENU.ID, title: CONTEXT_MENU.MANAGE_FOLDERS.TITLE, contexts: ["all"] });
+  browser.contextMenus.create({ parentId: CONTEXT_MENU.FOLDER_SUBMENU.ID, type: 'separator' });
+  saveFolders.forEach((folder, i) => {
+    const isActive = folder === currentSaveFolder;
+    browser.contextMenus.create({ id: CONTEXT_MENU.FOLDER_SUBMENU.ID + i, parentId: CONTEXT_MENU.FOLDER_SUBMENU.ID, title: '/' + folder, contexts: ["all"], type: 'radio', checked: isActive });
+  });
+}
 
-  if (active) {
-    title.push(
-      'Save folder: ' + STATE.saveFolder,
-      'Save method: ' + _values__WEBPACK_IMPORTED_MODULE_1__["EVENT_MEANINGS"][ STATE.saveMethod ],
-    );
+function onContextMenuClicked (info) {
+  switch (info.menuItemId[0]) {
+    case CONTEXT_MENU.SWITCH.ID:
+      onSwitchClicked();
+      return;
+
+    case CONTEXT_MENU.METHOD_SUBMENU.ID:
+      changeSaveMethod(info.menuItemId[1]);
+      return;
+
+    case CONTEXT_MENU.MANAGE_FOLDERS.ID:
+      openSettings();
+      return
+
+    case CONTEXT_MENU.FOLDER_SUBMENU.ID:
+      changeSaveFolder(info.menuItemId[1]);
+      return;
   }
+}
+
+async function onSwitchClicked () {
+  const active = await Object(_actions__WEBPACK_IMPORTED_MODULE_1__["runUserScript"])(!_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), _state__WEBPACK_IMPORTED_MODULE_0__["default"].saveMethod());
+  _state__WEBPACK_IMPORTED_MODULE_0__["default"].active(active);
+  setupContextMenu( _state__WEBPACK_IMPORTED_MODULE_0__["default"].getContextMenuState() );
+}
+
+function changeSaveMethod (methodIdx) {
+  const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
+  browser.storage.local.set({ saveMethod });
+  Object(_actions__WEBPACK_IMPORTED_MODULE_1__["runUserScript"])(_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), saveMethod);
+}
+
+function openSettings () {
+  browser.tabs.create({ active: true, url: SETTINGS_PAGE_URL });
+}
+
+function changeSaveFolder (folderIdx) {
+  browser.storage.local.set({ saveFolder: _state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders()[ folderIdx ] });
+}
+
+
+/***/ }),
+
+/***/ "./src/background/state.js":
+/*!*********************************!*\
+  !*** ./src/background/state.js ***!
+  \*********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
+const EXTENSION_NAME = 'Save on Click';
+
+const DEFAULT_SETTINGS = {
+  saveFolder: EXTENSION_NAME + '/',
+  saveMethod: 'contextmenu',
+  saveFolders: ['', EXTENSION_NAME + '/']
+};
+
+const STATE = {
+  tabs: {},
+  active: false,
+  saveFolders: [],
+  saveFolder: '',
+  saveMethod: '',
+};
+
+const contextMenuKeys = ['active', 'saveFolders', 'saveFolder', 'saveMethod'];
+
+const accessors = {};
+
+contextMenuKeys.forEach((stateName) => {
+
+  accessors[stateName] = (value) => {
+    if (typeof value !== 'undefined') {
+      STATE[stateName] = value;
+    }
   
-  browser.browserAction.setTitle({ title: title.join('\n') });
-}
+    return STATE[stateName];
+  };
 
-function onStorageChange (changes) {
-  for (let key in changes) {
-    STATE[key] = changes[key].newValue;
+});
+
+accessors.tabState = tabState;
+
+function tabState (tabId, tab) {
+  if (typeof tab !== 'undefined') {
+    STATE.tabs[tabId] = tab;
   }
 
-  switchIcon(STATE.active);
+  return STATE.tabs[tabId];
 }
+
+function get (keys) {
+  const values = {};
+
+  keys.forEach((key) => {
+    values[key] = accessors[key]();
+  });
+
+  return values;
+}
+
+function getContextMenuState () {
+  return get(contextMenuKeys);
+}
+
+function rootFolder () {
+  return DEFAULT_SETTINGS.saveFolders[0];
+}
+
+async function loadSettings () {
+  const savedOptions = await browser.storage.local.get();
+  
+  for (let key in DEFAULT_SETTINGS) {
+    if (typeof savedOptions[key] === 'undefined') {
+      savedOptions[key] = DEFAULT_SETTINGS[key];
+    }
+  }
+
+  Object.assign(STATE, savedOptions);
+  return STATE;
+}
+
+function updateFromStorage (storageChanges) {
+  for (let key in storageChanges) {
+    STATE[key] = storageChanges[key].newValue;
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  ...accessors,
+  loadSettings,
+  getContextMenuState,
+  rootFolder,
+  updateFromStorage,
+});
 
 
 /***/ }),
@@ -1428,12 +1606,16 @@ function onStorageChange (changes) {
 /*!************************!*\
   !*** ./src/helpers.js ***!
   \************************/
-/*! exports provided: removeForbiddenCharacters */
+/*! exports provided: removeForbiddenCharacters, getCurrentTab, isHTTPUrl */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeForbiddenCharacters", function() { return removeForbiddenCharacters; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getCurrentTab", function() { return getCurrentTab; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isHTTPUrl", function() { return isHTTPUrl; });
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
 function removeForbiddenCharacters (str, isFileName) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
@@ -1445,33 +1627,13 @@ function removeForbiddenCharacters (str, isFileName) {
   return str.replace(regexp, '_');
 }
 
+function getCurrentTab () {
+  return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => tabs[0]);
+}
 
-/***/ }),
-
-/***/ "./src/values.js":
-/*!***********************!*\
-  !*** ./src/values.js ***!
-  \***********************/
-/*! exports provided: EXTENSION_NAME, DEFAULT_SETTINGS, EVENT_MEANINGS */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EXTENSION_NAME", function() { return EXTENSION_NAME; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DEFAULT_SETTINGS", function() { return DEFAULT_SETTINGS; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EVENT_MEANINGS", function() { return EVENT_MEANINGS; });
-const EXTENSION_NAME = 'Clickloader';
-
-const DEFAULT_SETTINGS = {
-  saveFolder: EXTENSION_NAME + '/',
-  saveMethod: 'contextmenu',
-};
-
-const EVENT_MEANINGS = {
-  contextmenu: 'Right-click',
-  mousedown: 'Shift + Left-click',
-  dblclick: 'Double-click',
-};
+function isHTTPUrl (url) {
+  return url.indexOf('http') === 0;
+}
 
 
 /***/ })

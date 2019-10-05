@@ -1279,16 +1279,121 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
+/***/ "./src/background/state.js":
+/*!*********************************!*\
+  !*** ./src/background/state.js ***!
+  \*********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
+const EXTENSION_NAME = 'Save on Click';
+
+const DEFAULT_SETTINGS = {
+  saveFolder: EXTENSION_NAME + '/',
+  saveMethod: 'contextmenu',
+  saveFolders: ['', EXTENSION_NAME + '/']
+};
+
+const STATE = {
+  tabs: {},
+  active: false,
+  saveFolders: [],
+  saveFolder: '',
+  saveMethod: '',
+};
+
+const contextMenuKeys = ['active', 'saveFolders', 'saveFolder', 'saveMethod'];
+
+const accessors = {};
+
+contextMenuKeys.forEach((stateName) => {
+
+  accessors[stateName] = (value) => {
+    if (typeof value !== 'undefined') {
+      STATE[stateName] = value;
+    }
+  
+    return STATE[stateName];
+  };
+
+});
+
+accessors.tabState = tabState;
+
+function tabState (tabId, tab) {
+  if (typeof tab !== 'undefined') {
+    STATE.tabs[tabId] = tab;
+  }
+
+  return STATE.tabs[tabId];
+}
+
+function get (keys) {
+  const values = {};
+
+  keys.forEach((key) => {
+    values[key] = accessors[key]();
+  });
+
+  return values;
+}
+
+function getContextMenuState () {
+  return get(contextMenuKeys);
+}
+
+function rootFolder () {
+  return DEFAULT_SETTINGS.saveFolders[0];
+}
+
+async function loadSettings () {
+  const savedOptions = await browser.storage.local.get();
+  
+  for (let key in DEFAULT_SETTINGS) {
+    if (typeof savedOptions[key] === 'undefined') {
+      savedOptions[key] = DEFAULT_SETTINGS[key];
+    }
+  }
+
+  Object.assign(STATE, savedOptions);
+  return STATE;
+}
+
+function updateFromStorage (storageChanges) {
+  for (let key in storageChanges) {
+    STATE[key] = storageChanges[key].newValue;
+  }
+}
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  ...accessors,
+  loadSettings,
+  getContextMenuState,
+  rootFolder,
+  updateFromStorage,
+});
+
+
+/***/ }),
+
 /***/ "./src/helpers.js":
 /*!************************!*\
   !*** ./src/helpers.js ***!
   \************************/
-/*! exports provided: removeForbiddenCharacters */
+/*! exports provided: removeForbiddenCharacters, getCurrentTab, isHTTPUrl */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeForbiddenCharacters", function() { return removeForbiddenCharacters; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getCurrentTab", function() { return getCurrentTab; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isHTTPUrl", function() { return isHTTPUrl; });
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
 function removeForbiddenCharacters (str, isFileName) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
@@ -1298,6 +1403,14 @@ function removeForbiddenCharacters (str, isFileName) {
 
   const regexp = new RegExp(regexpStr, 'g');
   return str.replace(regexp, '_');
+}
+
+function getCurrentTab () {
+  return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => tabs[0]);
+}
+
+function isHTTPUrl (url) {
+  return url.indexOf('http') === 0;
 }
 
 
@@ -1312,117 +1425,113 @@ function removeForbiddenCharacters (str, isFileName) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _helpers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers */ "./src/helpers.js");
-/* harmony import */ var _values__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./values */ "./src/values.js");
+/* harmony import */ var _background_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./background/state */ "./src/background/state.js");
+/* harmony import */ var _helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers */ "./src/helpers.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
 
 
 
-const FIELDS = {
-  saveFolder: {
-    prepare: (val) => {
-      let saveFolder = Object(_helpers__WEBPACK_IMPORTED_MODULE_0__["removeForbiddenCharacters"])(val).replace(/\/+/g, '/').replace(/\/$/, '');
+const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
+const FOLDERS_LIST = document.querySelector('.saveFolders');
 
-      if (saveFolder.length) {
-        saveFolder += '/';
-      }
+FOLDERS_LIST.addEventListener('click', (e) => handleFolder(e));
+document.querySelector('.addNew').addEventListener('click', (e) => saveNewFolder(e));
 
-      return saveFolder;
+browser.storage.onChanged.addListener(onStorageChange);
+
+_background_state__WEBPACK_IMPORTED_MODULE_0__["default"].loadSettings().then(setupFoldersList);
+
+async function setupFoldersList({ saveFolders }) {
+  emptyNode(FOLDERS_LIST);
+
+  saveFolders.forEach((folder, i) => {
+    if (!i) {
+      return;
     }
-  },
-  saveMethod: { prepare: (val) => val, options: _values__WEBPACK_IMPORTED_MODULE_1__["EVENT_MEANINGS"] },
-};
 
-browser.storage.onChanged.addListener((changes) => {
+    const item = document.createElement('li');
+    const folderPath = createElement('span', '/' + folder, ['folderPath']);
+    const editButton = createElement('button', 'Edit', ['edit']);
+    editButton.dataset.folder = folder;
+    const removeButton = createElement('button', 'Forget', ['remove']);
+    removeButton.dataset.folder = folder;
+    item.appendChild(folderPath);
+    item.appendChild(editButton);
+    item.appendChild(removeButton);
+
+    FOLDERS_LIST.appendChild(item);
+  });
+}
+
+function createElement (type, text, classNames) {
+  const button = document.createElement(type);
+  button.appendChild( document.createTextNode(text) );
+  button.classList.add(...classNames);
+  return button;
+}
+
+function emptyNode (node) {
+  while (node.hasChildNodes()) {
+    node.removeChild(node.firstChild);
+  }
+}
+
+function saveNewFolder () {
+  let newFolder = NEW_FOLDER_INPUT.value;
+  newFolder = Object(_helpers__WEBPACK_IMPORTED_MODULE_1__["removeForbiddenCharacters"])(newFolder).replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
+
+  if (newFolder.length) {
+    newFolder += '/';
+  }
+
+  const saveFolders = _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
+
+  if (!saveFolders.includes(newFolder)) {
+    saveFolders.push(newFolder);
+    saveFolders.sort();
+  }
+
+  browser.storage.local.set({ saveFolders, saveFolder: newFolder });
+
+  NEW_FOLDER_INPUT.value = '';
+}
+
+function handleFolder (e) {
+  const el = e.target;
+
+  if (el.classList.contains('edit')) {
+    editFolder( el.dataset.folder );
+    return;
+  }
+
+  if (el.classList.contains('remove')) {
+    removeFolder( el.dataset.folder );
+  }
+}
+
+function editFolder (folder) {
+  NEW_FOLDER_INPUT.value = folder;
+  setTimeout(() => NEW_FOLDER_INPUT.focus());
+}
+
+function removeFolder (folder) {
+  const saveFolders = _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
+  saveFolders.splice( saveFolders.indexOf(folder), 1 );
+
+  const saveFolder = folder === _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder() ? _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].rootFolder() : _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder();
+  
+  browser.storage.local.set({ saveFolders, saveFolder });
+}
+
+function onStorageChange (changes) {
   for (let key in changes) {
-    if (FIELDS[key]) {
-      document.querySelector('.' + key).value = changes[key].newValue;
+    _background_state__WEBPACK_IMPORTED_MODULE_0__["default"][key](changes[key].newValue);
+    if (key === 'saveFolders') {
+      setupFoldersList({ saveFolders: changes[key].newValue });
     }
   }
-});
-
-function setupInterface () {
-  const settingsKeys = Object.keys(FIELDS);
-
-  browser.storage.local.get(settingsKeys)
-    .then((values) => {
-      for (let key in values) {
-        const field = FIELDS[key];
-        const el = document.querySelector('.' + key);
-
-        if (field.options) {
-          appendOptions(el, field.options);
-        }
-        
-        field.default = _values__WEBPACK_IMPORTED_MODULE_1__["DEFAULT_SETTINGS"][key].default;
-        el.value = values[key];
-      }
-    });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  setupInterface();
-
-  document.querySelector('.save').addEventListener('click', (e) => saveSettings(e));
-  document.querySelector('.defaults').addEventListener('click', resetToDefaults);
-
-});
-
-function saveSettings (e) {
-  e.preventDefault();
-
-  const form = document.querySelector('.form');
-
-  const NEW_SETTINGS = {};
-  for (let key in FIELDS) {
-    const newValue = FIELDS[key].prepare( form.elements[key].value );
-    NEW_SETTINGS[key] =  newValue;
-  }
-
-  browser.storage.local.set(NEW_SETTINGS);
-}
-
-function resetToDefaults () {
-  browser.storage.local.set(_values__WEBPACK_IMPORTED_MODULE_1__["DEFAULT_SETTINGS"]);
-}
-
-function appendOptions (select, options) {
-  for (let value in options) {
-    const option = document.createElement('option');
-    option.value = value;
-    option.appendChild( document.createTextNode(options[value]) );
-    select.appendChild(option);
-  }
-}
-
-
-/***/ }),
-
-/***/ "./src/values.js":
-/*!***********************!*\
-  !*** ./src/values.js ***!
-  \***********************/
-/*! exports provided: EXTENSION_NAME, DEFAULT_SETTINGS, EVENT_MEANINGS */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EXTENSION_NAME", function() { return EXTENSION_NAME; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DEFAULT_SETTINGS", function() { return DEFAULT_SETTINGS; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EVENT_MEANINGS", function() { return EVENT_MEANINGS; });
-const EXTENSION_NAME = 'Clickloader';
-
-const DEFAULT_SETTINGS = {
-  saveFolder: EXTENSION_NAME + '/',
-  saveMethod: 'contextmenu',
-};
-
-const EVENT_MEANINGS = {
-  contextmenu: 'Right-click',
-  mousedown: 'Shift + Left-click',
-  dblclick: 'Double-click',
-};
 
 
 /***/ })
