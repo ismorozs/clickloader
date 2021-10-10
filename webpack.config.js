@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
 
@@ -30,4 +31,22 @@ module.exports = {
 
   devtool: false,
 
+  plugins: [
+    new CopyPlugin({
+      patterns: [
+        createCopyPattern('icons'),
+        createCopyPattern('options'),
+        createCopyPattern('manifest.json'),
+      ],
+    }),
+  ],
+
 };
+
+function createCopyPattern(endPoint) {
+  return {
+    from: path.resolve(__dirname, 'src', endPoint),
+    to: path.resolve(__dirname, 'extension', endPoint),
+    filter: (path) => !path.endsWith('.js'),
+  };
+}

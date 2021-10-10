@@ -1,104 +1,21 @@
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/options.js");
-/******/ })
-/************************************************************************/
-/******/ ({
+/******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
 
 /***/ "./node_modules/webextension-polyfill/dist/browser-polyfill.js":
 /*!*********************************************************************!*\
   !*** ./node_modules/webextension-polyfill/dist/browser-polyfill.js ***!
   \*********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/*! unknown exports (runtime-defined) */
+/*! runtime requirements: top-level-this-exports, module, __webpack_exports__ */
+/*! CommonJS bailout: this is used directly at 13:3-7 */
+/***/ (function(module, exports) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
   if (true) {
     !(__WEBPACK_AMD_DEFINE_ARRAY__ = [module], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory),
-				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
-				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
   } else { var mod; }
 })(this, function (module) {
   /* webextension-polyfill - v0.4.0 - Wed Feb 06 2019 11:58:31 */
@@ -1279,15 +1196,212 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
-/***/ "./src/background/state.js":
-/*!*********************************!*\
-  !*** ./src/background/state.js ***!
-  \*********************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ "./src/options.js":
+/*!************************!*\
+  !*** ./src/options.js ***!
+  \************************/
+/*! namespace exports */
+/*! exports [not provided] [no usage info] */
+/*! runtime requirements: __webpack_require__, __webpack_require__.r, __webpack_exports__, __webpack_require__.* */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _options_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./options/index */ "./src/options/index.js");
+
+
+(0,_options_index__WEBPACK_IMPORTED_MODULE_0__.default)();
+
+
+/***/ }),
+
+/***/ "./src/options/index.js":
+/*!******************************!*\
+  !*** ./src/options/index.js ***!
+  \******************************/
+/*! namespace exports */
+/*! export default [provided] [no usage info] [missing usage info prevents renaming] */
+/*! other exports [not provided] [no usage info] */
+/*! runtime requirements: __webpack_require__, __webpack_exports__, __webpack_require__.r, __webpack_require__.d, __webpack_require__.* */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => __WEBPACK_DEFAULT_EXPORT__
+/* harmony export */ });
+/* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
+/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
+
+
+
+const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
+const FOLDERS_LIST = document.querySelector('.saveFolders');
+
+function init () {
+  FOLDERS_LIST.addEventListener('click', (e) => handleFolder(e));
+  document.querySelector('.addNew').addEventListener('click', (e) => saveNewFolder(e));
+
+  browser.storage.onChanged.addListener(onStorageChange);
+
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.loadSettings().then(setupFoldersList);
+}
+
+async function setupFoldersList({ saveFolders }) {
+  emptyNode(FOLDERS_LIST);
+
+  saveFolders.forEach((folder, i) => {
+    if (!i) {
+      return;
+    }
+
+    const item = document.createElement('li');
+    const folderPath = createElement('span', '/' + folder, ['folderPath']);
+    const editButton = createElement('button', 'Edit', ['edit']);
+    editButton.dataset.folder = folder;
+    const removeButton = createElement('button', 'Forget', ['remove']);
+    removeButton.dataset.folder = folder;
+    item.appendChild(folderPath);
+    item.appendChild(editButton);
+    item.appendChild(removeButton);
+
+    FOLDERS_LIST.appendChild(item);
+  });
+}
+
+function createElement (type, text, classNames) {
+  const button = document.createElement(type);
+  button.appendChild( document.createTextNode(text) );
+  button.classList.add(...classNames);
+  return button;
+}
+
+function emptyNode (node) {
+  while (node.hasChildNodes()) {
+    node.removeChild(node.firstChild);
+  }
+}
+
+function saveNewFolder () {
+  let newFolder = NEW_FOLDER_INPUT.value;
+  newFolder = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_1__.removeForbiddenCharacters)(newFolder).replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
+
+  if (newFolder.length) {
+    newFolder += '/';
+  }
+
+  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolders();
+
+  if (!saveFolders.includes(newFolder)) {
+    saveFolders.push(newFolder);
+    saveFolders.sort();
+  }
+
+  browser.storage.local.set({ saveFolders, saveFolder: newFolder });
+
+  NEW_FOLDER_INPUT.value = '';
+}
+
+function handleFolder (e) {
+  const el = e.target;
+
+  if (el.classList.contains('edit')) {
+    editFolder( el.dataset.folder );
+    return;
+  }
+
+  if (el.classList.contains('remove')) {
+    removeFolder( el.dataset.folder );
+  }
+}
+
+function editFolder (folder) {
+  NEW_FOLDER_INPUT.value = folder;
+  setTimeout(() => NEW_FOLDER_INPUT.focus());
+}
+
+function removeFolder (folder) {
+  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolders();
+  saveFolders.splice( saveFolders.indexOf(folder), 1 );
+
+  const saveFolder = folder === _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolder() ? _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.rootFolder() : _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolder();
+  
+  browser.storage.local.set({ saveFolders, saveFolder });
+}
+
+function onStorageChange (changes) {
+  for (let key in changes) {
+    _shared_state__WEBPACK_IMPORTED_MODULE_0__.default[key](changes[key].newValue);
+    if (key === 'saveFolders') {
+      setupFoldersList({ saveFolders: changes[key].newValue });
+    }
+  }
+}
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (init);
+
+/***/ }),
+
+/***/ "./src/shared/helpers.js":
+/*!*******************************!*\
+  !*** ./src/shared/helpers.js ***!
+  \*******************************/
+/*! namespace exports */
+/*! export getCurrentTab [provided] [no usage info] [missing usage info prevents renaming] */
+/*! export isHTTPUrl [provided] [no usage info] [missing usage info prevents renaming] */
+/*! export removeForbiddenCharacters [provided] [no usage info] [missing usage info prevents renaming] */
+/*! other exports [not provided] [no usage info] */
+/*! runtime requirements: __webpack_require__.r, __webpack_exports__, __webpack_require__, __webpack_require__.d, __webpack_require__.* */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "removeForbiddenCharacters": () => /* binding */ removeForbiddenCharacters,
+/* harmony export */   "getCurrentTab": () => /* binding */ getCurrentTab,
+/* harmony export */   "isHTTPUrl": () => /* binding */ isHTTPUrl
+/* harmony export */ });
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
+function removeForbiddenCharacters (str, isFileName) {
+  const regexpStr = [
+    '[\\\\\?%*:|"<>',
+    isFileName ? '\\/' : '\\.',
+    ']'
+  ].join('');
+
+  const regexp = new RegExp(regexpStr, 'g');
+  return str.replace(regexp, '_');
+}
+
+function getCurrentTab () {
+  return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => tabs[0]);
+}
+
+function isHTTPUrl (url) {
+  return url.indexOf('http') === 0;
+}
+
+
+/***/ }),
+
+/***/ "./src/shared/state.js":
+/*!*****************************!*\
+  !*** ./src/shared/state.js ***!
+  \*****************************/
+/*! namespace exports */
+/*! export default [provided] [no usage info] [missing usage info prevents renaming] */
+/*! other exports [not provided] [no usage info] */
+/*! runtime requirements: __webpack_exports__, __webpack_require__.r, __webpack_require__, __webpack_require__.d, __webpack_require__.* */
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => __WEBPACK_DEFAULT_EXPORT__
+/* harmony export */ });
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
 const EXTENSION_NAME = 'Save on Click';
@@ -1369,7 +1483,7 @@ function updateFromStorage (storageChanges) {
   }
 }
 
-/* harmony default export */ __webpack_exports__["default"] = ({
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   ...accessors,
   loadSettings,
   getContextMenuState,
@@ -1378,162 +1492,66 @@ function updateFromStorage (storageChanges) {
 });
 
 
-/***/ }),
-
-/***/ "./src/helpers.js":
-/*!************************!*\
-  !*** ./src/helpers.js ***!
-  \************************/
-/*! exports provided: removeForbiddenCharacters, getCurrentTab, isHTTPUrl */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeForbiddenCharacters", function() { return removeForbiddenCharacters; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getCurrentTab", function() { return getCurrentTab; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isHTTPUrl", function() { return isHTTPUrl; });
-const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
-
-function removeForbiddenCharacters (str, isFileName) {
-  const regexpStr = [
-    '[\\\\\?%*:|"<>',
-    isFileName ? '\\/' : '\\.',
-    ']'
-  ].join('');
-
-  const regexp = new RegExp(regexpStr, 'g');
-  return str.replace(regexp, '_');
-}
-
-function getCurrentTab () {
-  return browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => tabs[0]);
-}
-
-function isHTTPUrl (url) {
-  return url.indexOf('http') === 0;
-}
-
-
-/***/ }),
-
-/***/ "./src/options.js":
-/*!************************!*\
-  !*** ./src/options.js ***!
-  \************************/
-/*! no exports provided */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _background_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./background/state */ "./src/background/state.js");
-/* harmony import */ var _helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers */ "./src/helpers.js");
-const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
-
-
-
-
-const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
-const FOLDERS_LIST = document.querySelector('.saveFolders');
-
-FOLDERS_LIST.addEventListener('click', (e) => handleFolder(e));
-document.querySelector('.addNew').addEventListener('click', (e) => saveNewFolder(e));
-
-browser.storage.onChanged.addListener(onStorageChange);
-
-_background_state__WEBPACK_IMPORTED_MODULE_0__["default"].loadSettings().then(setupFoldersList);
-
-async function setupFoldersList({ saveFolders }) {
-  emptyNode(FOLDERS_LIST);
-
-  saveFolders.forEach((folder, i) => {
-    if (!i) {
-      return;
-    }
-
-    const item = document.createElement('li');
-    const folderPath = createElement('span', '/' + folder, ['folderPath']);
-    const editButton = createElement('button', 'Edit', ['edit']);
-    editButton.dataset.folder = folder;
-    const removeButton = createElement('button', 'Forget', ['remove']);
-    removeButton.dataset.folder = folder;
-    item.appendChild(folderPath);
-    item.appendChild(editButton);
-    item.appendChild(removeButton);
-
-    FOLDERS_LIST.appendChild(item);
-  });
-}
-
-function createElement (type, text, classNames) {
-  const button = document.createElement(type);
-  button.appendChild( document.createTextNode(text) );
-  button.classList.add(...classNames);
-  return button;
-}
-
-function emptyNode (node) {
-  while (node.hasChildNodes()) {
-    node.removeChild(node.firstChild);
-  }
-}
-
-function saveNewFolder () {
-  let newFolder = NEW_FOLDER_INPUT.value;
-  newFolder = Object(_helpers__WEBPACK_IMPORTED_MODULE_1__["removeForbiddenCharacters"])(newFolder).replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
-
-  if (newFolder.length) {
-    newFolder += '/';
-  }
-
-  const saveFolders = _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
-
-  if (!saveFolders.includes(newFolder)) {
-    saveFolders.push(newFolder);
-    saveFolders.sort();
-  }
-
-  browser.storage.local.set({ saveFolders, saveFolder: newFolder });
-
-  NEW_FOLDER_INPUT.value = '';
-}
-
-function handleFolder (e) {
-  const el = e.target;
-
-  if (el.classList.contains('edit')) {
-    editFolder( el.dataset.folder );
-    return;
-  }
-
-  if (el.classList.contains('remove')) {
-    removeFolder( el.dataset.folder );
-  }
-}
-
-function editFolder (folder) {
-  NEW_FOLDER_INPUT.value = folder;
-  setTimeout(() => NEW_FOLDER_INPUT.focus());
-}
-
-function removeFolder (folder) {
-  const saveFolders = _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
-  saveFolders.splice( saveFolders.indexOf(folder), 1 );
-
-  const saveFolder = folder === _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder() ? _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].rootFolder() : _background_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder();
-  
-  browser.storage.local.set({ saveFolders, saveFolder });
-}
-
-function onStorageChange (changes) {
-  for (let key in changes) {
-    _background_state__WEBPACK_IMPORTED_MODULE_0__["default"][key](changes[key].newValue);
-    if (key === 'saveFolders') {
-      setupFoldersList({ saveFolders: changes[key].newValue });
-    }
-  }
-}
-
-
 /***/ })
 
-/******/ });
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		if(__webpack_module_cache__[moduleId]) {
+/******/ 			return __webpack_module_cache__[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop)
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	// startup
+/******/ 	// Load entry module
+/******/ 	__webpack_require__("./src/options.js");
+/******/ 	// This entry module used 'exports' so it can't be inlined
+/******/ })()
+;

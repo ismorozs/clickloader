@@ -1,7 +1,7 @@
 const browser = require('webextension-polyfill');
 
-import State from './state';
-import { getCurrentTab, isHTTPUrl, removeForbiddenCharacters } from '../helpers';
+import State from '../shared/state';
+import { getCurrentTab, isHTTPUrl, removeForbiddenCharacters } from '../shared/helpers';
 
 export async function runUserScript (newActiveState, newSaveMethod, tab) {
   if (!tab) {

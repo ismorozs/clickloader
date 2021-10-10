@@ -1,6 +1,6 @@
 const browser = require('webextension-polyfill');
 
-import State from './state';
+import State from '../shared/state';
 import { runUserScript } from './actions';
 
 const SETTINGS_PAGE_URL = '/options/options.html';
