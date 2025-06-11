@@ -5,9 +5,6 @@
 /*!*********************************************************************!*\
   !*** ./node_modules/webextension-polyfill/dist/browser-polyfill.js ***!
   \*********************************************************************/
-/*! unknown exports (runtime-defined) */
-/*! runtime requirements: top-level-this-exports, module, __webpack_exports__ */
-/*! CommonJS bailout: this is used directly at 13:3-7 */
 /***/ (function(module, exports) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
@@ -16,7 +13,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-  } else { var mod; }
+  } else // removed by dead control flow
+{ var mod; }
 })(this, function (module) {
   /* webextension-polyfill - v0.4.0 - Wed Feb 06 2019 11:58:31 */
   /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
@@ -1196,39 +1194,16 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
-/***/ "./src/options.js":
-/*!************************!*\
-  !*** ./src/options.js ***!
-  \************************/
-/*! namespace exports */
-/*! exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__, __webpack_require__.r, __webpack_exports__, __webpack_require__.* */
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _options_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./options/index */ "./src/options/index.js");
-
-
-(0,_options_index__WEBPACK_IMPORTED_MODULE_0__.default)();
-
-
-/***/ }),
-
 /***/ "./src/options/index.js":
 /*!******************************!*\
   !*** ./src/options/index.js ***!
   \******************************/
-/*! namespace exports */
-/*! export default [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__, __webpack_exports__, __webpack_require__.r, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => __WEBPACK_DEFAULT_EXPORT__
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
 /* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
@@ -1246,7 +1221,7 @@ function init () {
 
   browser.storage.onChanged.addListener(onStorageChange);
 
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.loadSettings().then(setupFoldersList);
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].loadSettings().then(setupFoldersList);
 }
 
 async function setupFoldersList({ saveFolders }) {
@@ -1292,7 +1267,7 @@ function saveNewFolder () {
     newFolder += '/';
   }
 
-  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolders();
+  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
 
   if (!saveFolders.includes(newFolder)) {
     saveFolders.push(newFolder);
@@ -1323,17 +1298,17 @@ function editFolder (folder) {
 }
 
 function removeFolder (folder) {
-  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolders();
+  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
   saveFolders.splice( saveFolders.indexOf(folder), 1 );
 
-  const saveFolder = folder === _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolder() ? _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.rootFolder() : _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolder();
+  const saveFolder = folder === _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder() ? _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].rootFolder() : _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder();
   
   browser.storage.local.set({ saveFolders, saveFolder });
 }
 
 function onStorageChange (changes) {
   for (let key in changes) {
-    _shared_state__WEBPACK_IMPORTED_MODULE_0__.default[key](changes[key].newValue);
+    _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"][key](changes[key].newValue);
     if (key === 'saveFolders') {
       setupFoldersList({ saveFolders: changes[key].newValue });
     }
@@ -1348,20 +1323,14 @@ function onStorageChange (changes) {
 /*!*******************************!*\
   !*** ./src/shared/helpers.js ***!
   \*******************************/
-/*! namespace exports */
-/*! export getCurrentTab [provided] [no usage info] [missing usage info prevents renaming] */
-/*! export isHTTPUrl [provided] [no usage info] [missing usage info prevents renaming] */
-/*! export removeForbiddenCharacters [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__.r, __webpack_exports__, __webpack_require__, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "removeForbiddenCharacters": () => /* binding */ removeForbiddenCharacters,
-/* harmony export */   "getCurrentTab": () => /* binding */ getCurrentTab,
-/* harmony export */   "isHTTPUrl": () => /* binding */ isHTTPUrl
+/* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
+/* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
 /* harmony export */ });
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
@@ -1391,16 +1360,12 @@ function isHTTPUrl (url) {
 /*!*****************************!*\
   !*** ./src/shared/state.js ***!
   \*****************************/
-/*! namespace exports */
-/*! export default [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_exports__, __webpack_require__.r, __webpack_require__, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => __WEBPACK_DEFAULT_EXPORT__
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
@@ -1502,8 +1467,9 @@ function updateFromStorage (storageChanges) {
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		if(__webpack_module_cache__[moduleId]) {
-/******/ 			return __webpack_module_cache__[moduleId].exports;
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = __webpack_module_cache__[moduleId] = {
@@ -1534,7 +1500,7 @@ function updateFromStorage (storageChanges) {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop)
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
@@ -1549,9 +1515,20 @@ function updateFromStorage (storageChanges) {
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-/******/ 	// startup
-/******/ 	// Load entry module
-/******/ 	__webpack_require__("./src/options.js");
-/******/ 	// This entry module used 'exports' so it can't be inlined
+var __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+(() => {
+"use strict";
+/*!************************!*\
+  !*** ./src/options.js ***!
+  \************************/
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _options_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./options/index */ "./src/options/index.js");
+
+
+(0,_options_index__WEBPACK_IMPORTED_MODULE_0__["default"])();
+
+})();
+
 /******/ })()
 ;

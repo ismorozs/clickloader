@@ -5,9 +5,6 @@
 /*!*********************************************************************!*\
   !*** ./node_modules/webextension-polyfill/dist/browser-polyfill.js ***!
   \*********************************************************************/
-/*! unknown exports (runtime-defined) */
-/*! runtime requirements: top-level-this-exports, module, __webpack_exports__ */
-/*! CommonJS bailout: this is used directly at 13:3-7 */
 /***/ (function(module, exports) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (global, factory) {
@@ -16,7 +13,8 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-  } else { var mod; }
+  } else // removed by dead control flow
+{ var mod; }
 })(this, function (module) {
   /* webextension-polyfill - v0.4.0 - Wed Feb 06 2019 11:58:31 */
   /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
@@ -1196,41 +1194,17 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
-/***/ "./src/background-script.js":
-/*!**********************************!*\
-  !*** ./src/background-script.js ***!
-  \**********************************/
-/*! namespace exports */
-/*! exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__, __webpack_require__.r, __webpack_exports__, __webpack_require__.* */
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _background_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./background/index */ "./src/background/index.js");
-
-
-(0,_background_index__WEBPACK_IMPORTED_MODULE_0__.default)();
-
-
-/***/ }),
-
 /***/ "./src/background/actions.js":
 /*!***********************************!*\
   !*** ./src/background/actions.js ***!
   \***********************************/
-/*! namespace exports */
-/*! export runUserScript [provided] [no usage info] [missing usage info prevents renaming] */
-/*! export saveContent [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__, __webpack_require__.r, __webpack_exports__, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "runUserScript": () => /* binding */ runUserScript,
-/* harmony export */   "saveContent": () => /* binding */ saveContent
+/* harmony export */   runUserScript: () => (/* binding */ runUserScript),
+/* harmony export */   saveContent: () => (/* binding */ saveContent)
 /* harmony export */ });
 /* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
 /* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
@@ -1238,6 +1212,8 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 
 
+
+const MAX_FILE_NAME = 200;
 
 async function runUserScript (newActiveState, newSaveMethod, tab) {
   if (!tab) {
@@ -1251,10 +1227,10 @@ async function runUserScript (newActiveState, newSaveMethod, tab) {
   let executeScript = Promise.resolve();
   let sendMessage = () => {};
 
-  const stateOnTab = _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.tabState(tab.id);
+  const stateOnTab = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tab.id);
   if (!stateOnTab || stateOnTab.url !== tab.url) {
 
-    if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__.default.active() && !newActiveState) {
+    if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active() && !newActiveState) {
       return false;
     }
 
@@ -1265,18 +1241,23 @@ async function runUserScript (newActiveState, newSaveMethod, tab) {
     sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active: newActiveState, saveMethod: newSaveMethod });
   }
 
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.tabState(tab.id, { id: tab.id, active: newActiveState, saveMethod: newSaveMethod, url: tab.url });
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tab.id, { id: tab.id, active: newActiveState, saveMethod: newSaveMethod, url: tab.url });
 
   executeScript.then(sendMessage);
   return newActiveState;
 }
 
-function saveContent ({ src, extension }) {
-  const imgName = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_1__.removeForbiddenCharacters)(src.split('//')[1], true);
+function saveContent ({ name, src, extension }) {
+  const sourceExtension = src
+    .split(".")
+    .slice(-1)[0]
+    .split("?")[0]
+    .split("/")[0];
+  const handledName = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_1__.removeForbiddenCharacters)(name, true).substring(0, MAX_FILE_NAME);
   browser.downloads.download({
     url: src,
     saveAs: false,
-    filename: _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolder() + imgName + extension
+    filename: `${_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder()}${handledName}.${sourceExtension}${extension}`,
   });
 }
 
@@ -1287,18 +1268,13 @@ function saveContent ({ src, extension }) {
 /*!****************************************!*\
   !*** ./src/background/context-menu.js ***!
   \****************************************/
-/*! namespace exports */
-/*! export onContextMenuClicked [provided] [no usage info] [missing usage info prevents renaming] */
-/*! export setupContextMenu [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__, __webpack_require__.r, __webpack_exports__, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "setupContextMenu": () => /* binding */ setupContextMenu,
-/* harmony export */   "onContextMenuClicked": () => /* binding */ onContextMenuClicked
+/* harmony export */   onContextMenuClicked: () => (/* binding */ onContextMenuClicked),
+/* harmony export */   setupContextMenu: () => (/* binding */ setupContextMenu)
 /* harmony export */ });
 /* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
 /* harmony import */ var _actions__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./actions */ "./src/background/actions.js");
@@ -1376,15 +1352,15 @@ function onContextMenuClicked (info) {
 }
 
 async function onSwitchClicked () {
-  const active = await (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(!_shared_state__WEBPACK_IMPORTED_MODULE_0__.default.active(), _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveMethod());
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.active(active);
-  setupContextMenu( _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.getContextMenuState() );
+  const active = await (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveMethod());
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(active);
+  setupContextMenu( _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].getContextMenuState() );
 }
 
 function changeSaveMethod (methodIdx) {
   const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
   browser.storage.local.set({ saveMethod });
-  (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__.default.active(), saveMethod);
+  (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), saveMethod);
 }
 
 function openSettings () {
@@ -1392,7 +1368,7 @@ function openSettings () {
 }
 
 function changeSaveFolder (folderIdx) {
-  browser.storage.local.set({ saveFolder: _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveFolders()[ folderIdx ] });
+  browser.storage.local.set({ saveFolder: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders()[ folderIdx ] });
 }
 
 
@@ -1402,16 +1378,12 @@ function changeSaveFolder (folderIdx) {
 /*!*********************************!*\
   !*** ./src/background/index.js ***!
   \*********************************/
-/*! namespace exports */
-/*! export default [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__, __webpack_exports__, __webpack_require__.r, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => __WEBPACK_DEFAULT_EXPORT__
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
 /* harmony import */ var _actions__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./actions */ "./src/background/actions.js");
@@ -1430,28 +1402,28 @@ function init () {
   browser.runtime.onMessage.addListener(_actions__WEBPACK_IMPORTED_MODULE_1__.saveContent);
   browser.contextMenus.onClicked.addListener(_context_menu__WEBPACK_IMPORTED_MODULE_2__.onContextMenuClicked);
 
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.loadSettings().then(_context_menu__WEBPACK_IMPORTED_MODULE_2__.setupContextMenu);
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].loadSettings().then(_context_menu__WEBPACK_IMPORTED_MODULE_2__.setupContextMenu);
 }
 
 function onTabActivated (data) {
-  const tabData = _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.tabState(data.tabId);
-  (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__.default.active(), _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveMethod(), tabData);
+  const tabData = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(data.tabId);
+  (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveMethod(), tabData);
 }
 
 function onTabUpdated (tabId, changeInfo, tab) {
   if (tab.active && tab.status === 'complete') {
-    (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__.default.active(), _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.saveMethod(), tab);
+    (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveMethod(), tab);
   }
 }
 
 function onTabRemoved (tabId) {
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.tabState(tabId, undefined);
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tabId, undefined);
 }
 
 function onStorageChange (changes) {
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.updateFromStorage(changes);
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].updateFromStorage(changes);
   
-  (0,_context_menu__WEBPACK_IMPORTED_MODULE_2__.setupContextMenu)( _shared_state__WEBPACK_IMPORTED_MODULE_0__.default.getContextMenuState() );
+  (0,_context_menu__WEBPACK_IMPORTED_MODULE_2__.setupContextMenu)( _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].getContextMenuState() );
 }
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (init);
@@ -1463,20 +1435,14 @@ function onStorageChange (changes) {
 /*!*******************************!*\
   !*** ./src/shared/helpers.js ***!
   \*******************************/
-/*! namespace exports */
-/*! export getCurrentTab [provided] [no usage info] [missing usage info prevents renaming] */
-/*! export isHTTPUrl [provided] [no usage info] [missing usage info prevents renaming] */
-/*! export removeForbiddenCharacters [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_require__.r, __webpack_exports__, __webpack_require__, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "removeForbiddenCharacters": () => /* binding */ removeForbiddenCharacters,
-/* harmony export */   "getCurrentTab": () => /* binding */ getCurrentTab,
-/* harmony export */   "isHTTPUrl": () => /* binding */ isHTTPUrl
+/* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
+/* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
 /* harmony export */ });
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
@@ -1506,16 +1472,12 @@ function isHTTPUrl (url) {
 /*!*****************************!*\
   !*** ./src/shared/state.js ***!
   \*****************************/
-/*! namespace exports */
-/*! export default [provided] [no usage info] [missing usage info prevents renaming] */
-/*! other exports [not provided] [no usage info] */
-/*! runtime requirements: __webpack_exports__, __webpack_require__.r, __webpack_require__, __webpack_require__.d, __webpack_require__.* */
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => __WEBPACK_DEFAULT_EXPORT__
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
@@ -1617,8 +1579,9 @@ function updateFromStorage (storageChanges) {
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		if(__webpack_module_cache__[moduleId]) {
-/******/ 			return __webpack_module_cache__[moduleId].exports;
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = __webpack_module_cache__[moduleId] = {
@@ -1649,7 +1612,7 @@ function updateFromStorage (storageChanges) {
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__webpack_require__.o = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop)
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
@@ -1664,9 +1627,20 @@ function updateFromStorage (storageChanges) {
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-/******/ 	// startup
-/******/ 	// Load entry module
-/******/ 	__webpack_require__("./src/background-script.js");
-/******/ 	// This entry module used 'exports' so it can't be inlined
+var __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+(() => {
+"use strict";
+/*!**********************************!*\
+  !*** ./src/background-script.js ***!
+  \**********************************/
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _background_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./background/index */ "./src/background/index.js");
+
+
+(0,_background_index__WEBPACK_IMPORTED_MODULE_0__["default"])();
+
+})();
+
 /******/ })()
 ;

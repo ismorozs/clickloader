@@ -34,6 +34,7 @@ function sendImageUrl (e) {
   const srcData = extractSrc(e.target);
   if (srcData.src) {
     browser.runtime.sendMessage({
+      name: document.title,
       src: srcData.src,
       extension: srcData.extension || '',
     });
