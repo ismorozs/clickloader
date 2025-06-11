@@ -1,1 +1,4 @@
 node_modules
+manifest.chrome.json
+manifest.firefox.json
+src/shared/__specialRules__.js

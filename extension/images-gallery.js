@@ -1194,211 +1194,75 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
-/***/ "./src/options/index.js":
+/***/ "./node_modules/webextension-polyfill/dist/browser-polyfill.min.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/webextension-polyfill/dist/browser-polyfill.min.js ***!
+  \*************************************************************************/
+/***/ (function(module, exports) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function(a,b){if(true)!(__WEBPACK_AMD_DEFINE_ARRAY__ = [module], __WEBPACK_AMD_DEFINE_FACTORY__ = (b),
+		__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+		(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));else // removed by dead control flow
+{ var c; }})(this,function(a){"use strict";if("undefined"==typeof browser||Object.getPrototypeOf(browser)!==Object.prototype){a.exports=(e=>{const f={alarms:{clear:{minArgs:0,maxArgs:1},clearAll:{minArgs:0,maxArgs:0},get:{minArgs:0,maxArgs:1},getAll:{minArgs:0,maxArgs:0}},bookmarks:{create:{minArgs:1,maxArgs:1},get:{minArgs:1,maxArgs:1},getChildren:{minArgs:1,maxArgs:1},getRecent:{minArgs:1,maxArgs:1},getSubTree:{minArgs:1,maxArgs:1},getTree:{minArgs:0,maxArgs:0},move:{minArgs:2,maxArgs:2},remove:{minArgs:1,maxArgs:1},removeTree:{minArgs:1,maxArgs:1},search:{minArgs:1,maxArgs:1},update:{minArgs:2,maxArgs:2}},browserAction:{disable:{minArgs:0,maxArgs:1,fallbackToNoCallback:!0},enable:{minArgs:0,maxArgs:1,fallbackToNoCallback:!0},getBadgeBackgroundColor:{minArgs:1,maxArgs:1},getBadgeText:{minArgs:1,maxArgs:1},getPopup:{minArgs:1,maxArgs:1},getTitle:{minArgs:1,maxArgs:1},openPopup:{minArgs:0,maxArgs:0},setBadgeBackgroundColor:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0},setBadgeText:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0},setIcon:{minArgs:1,maxArgs:1},setPopup:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0},setTitle:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0}},browsingData:{remove:{minArgs:2,maxArgs:2},removeCache:{minArgs:1,maxArgs:1},removeCookies:{minArgs:1,maxArgs:1},removeDownloads:{minArgs:1,maxArgs:1},removeFormData:{minArgs:1,maxArgs:1},removeHistory:{minArgs:1,maxArgs:1},removeLocalStorage:{minArgs:1,maxArgs:1},removePasswords:{minArgs:1,maxArgs:1},removePluginData:{minArgs:1,maxArgs:1},settings:{minArgs:0,maxArgs:0}},commands:{getAll:{minArgs:0,maxArgs:0}},contextMenus:{remove:{minArgs:1,maxArgs:1},removeAll:{minArgs:0,maxArgs:0},update:{minArgs:2,maxArgs:2}},cookies:{get:{minArgs:1,maxArgs:1},getAll:{minArgs:1,maxArgs:1},getAllCookieStores:{minArgs:0,maxArgs:0},remove:{minArgs:1,maxArgs:1},set:{minArgs:1,maxArgs:1}},devtools:{inspectedWindow:{eval:{minArgs:1,maxArgs:2,singleCallbackArg:!1}},panels:{create:{minArgs:3,maxArgs:3,singleCallbackArg:!0}}},downloads:{cancel:{minArgs:1,maxArgs:1},download:{minArgs:1,maxArgs:1},erase:{minArgs:1,maxArgs:1},getFileIcon:{minArgs:1,maxArgs:2},open:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0},pause:{minArgs:1,maxArgs:1},removeFile:{minArgs:1,maxArgs:1},resume:{minArgs:1,maxArgs:1},search:{minArgs:1,maxArgs:1},show:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0}},extension:{isAllowedFileSchemeAccess:{minArgs:0,maxArgs:0},isAllowedIncognitoAccess:{minArgs:0,maxArgs:0}},history:{addUrl:{minArgs:1,maxArgs:1},deleteAll:{minArgs:0,maxArgs:0},deleteRange:{minArgs:1,maxArgs:1},deleteUrl:{minArgs:1,maxArgs:1},getVisits:{minArgs:1,maxArgs:1},search:{minArgs:1,maxArgs:1}},i18n:{detectLanguage:{minArgs:1,maxArgs:1},getAcceptLanguages:{minArgs:0,maxArgs:0}},identity:{launchWebAuthFlow:{minArgs:1,maxArgs:1}},idle:{queryState:{minArgs:1,maxArgs:1}},management:{get:{minArgs:1,maxArgs:1},getAll:{minArgs:0,maxArgs:0},getSelf:{minArgs:0,maxArgs:0},setEnabled:{minArgs:2,maxArgs:2},uninstallSelf:{minArgs:0,maxArgs:1}},notifications:{clear:{minArgs:1,maxArgs:1},create:{minArgs:1,maxArgs:2},getAll:{minArgs:0,maxArgs:0},getPermissionLevel:{minArgs:0,maxArgs:0},update:{minArgs:2,maxArgs:2}},pageAction:{getPopup:{minArgs:1,maxArgs:1},getTitle:{minArgs:1,maxArgs:1},hide:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0},setIcon:{minArgs:1,maxArgs:1},setPopup:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0},setTitle:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0},show:{minArgs:1,maxArgs:1,fallbackToNoCallback:!0}},permissions:{contains:{minArgs:1,maxArgs:1},getAll:{minArgs:0,maxArgs:0},remove:{minArgs:1,maxArgs:1},request:{minArgs:1,maxArgs:1}},runtime:{getBackgroundPage:{minArgs:0,maxArgs:0},getBrowserInfo:{minArgs:0,maxArgs:0},getPlatformInfo:{minArgs:0,maxArgs:0},openOptionsPage:{minArgs:0,maxArgs:0},requestUpdateCheck:{minArgs:0,maxArgs:0},sendMessage:{minArgs:1,maxArgs:3},sendNativeMessage:{minArgs:2,maxArgs:2},setUninstallURL:{minArgs:1,maxArgs:1}},sessions:{getDevices:{minArgs:0,maxArgs:1},getRecentlyClosed:{minArgs:0,maxArgs:1},restore:{minArgs:0,maxArgs:1}},storage:{local:{clear:{minArgs:0,maxArgs:0},get:{minArgs:0,maxArgs:1},getBytesInUse:{minArgs:0,maxArgs:1},remove:{minArgs:1,maxArgs:1},set:{minArgs:1,maxArgs:1}},managed:{get:{minArgs:0,maxArgs:1},getBytesInUse:{minArgs:0,maxArgs:1}},sync:{clear:{minArgs:0,maxArgs:0},get:{minArgs:0,maxArgs:1},getBytesInUse:{minArgs:0,maxArgs:1},remove:{minArgs:1,maxArgs:1},set:{minArgs:1,maxArgs:1}}},tabs:{captureVisibleTab:{minArgs:0,maxArgs:2},create:{minArgs:1,maxArgs:1},detectLanguage:{minArgs:0,maxArgs:1},discard:{minArgs:0,maxArgs:1},duplicate:{minArgs:1,maxArgs:1},executeScript:{minArgs:1,maxArgs:2},get:{minArgs:1,maxArgs:1},getCurrent:{minArgs:0,maxArgs:0},getZoom:{minArgs:0,maxArgs:1},getZoomSettings:{minArgs:0,maxArgs:1},highlight:{minArgs:1,maxArgs:1},insertCSS:{minArgs:1,maxArgs:2},move:{minArgs:2,maxArgs:2},query:{minArgs:1,maxArgs:1},reload:{minArgs:0,maxArgs:2},remove:{minArgs:1,maxArgs:1},removeCSS:{minArgs:1,maxArgs:2},sendMessage:{minArgs:2,maxArgs:3},setZoom:{minArgs:1,maxArgs:2},setZoomSettings:{minArgs:1,maxArgs:2},update:{minArgs:1,maxArgs:2}},topSites:{get:{minArgs:0,maxArgs:0}},webNavigation:{getAllFrames:{minArgs:1,maxArgs:1},getFrame:{minArgs:1,maxArgs:1}},webRequest:{handlerBehaviorChanged:{minArgs:0,maxArgs:0}},windows:{create:{minArgs:0,maxArgs:1},get:{minArgs:1,maxArgs:2},getAll:{minArgs:0,maxArgs:1},getCurrent:{minArgs:0,maxArgs:1},getLastFocused:{minArgs:0,maxArgs:1},remove:{minArgs:1,maxArgs:1},update:{minArgs:2,maxArgs:2}}};if(0===Object.keys(f).length)throw new Error("api-metadata.json has not been included in browser-polyfill");class g extends WeakMap{constructor(v,w=void 0){super(w),this.createItem=v}get(v){return this.has(v)||this.set(v,this.createItem(v)),super.get(v)}}const h=v=>{return v&&"object"==typeof v&&"function"==typeof v.then},i=(v,w)=>{return(...x)=>{e.runtime.lastError?v.reject(e.runtime.lastError):w.singleCallbackArg||1>=x.length&&!1!==w.singleCallbackArg?v.resolve(x[0]):v.resolve(x)}},j=v=>1==v?"argument":"arguments",k=(v,w)=>{return function(y,...z){if(z.length<w.minArgs)throw new Error(`Expected at least ${w.minArgs} ${j(w.minArgs)} for ${v}(), got ${z.length}`);if(z.length>w.maxArgs)throw new Error(`Expected at most ${w.maxArgs} ${j(w.maxArgs)} for ${v}(), got ${z.length}`);return new Promise((A,B)=>{if(w.fallbackToNoCallback)try{y[v](...z,i({resolve:A,reject:B},w))}catch(C){console.warn(`${v} API method doesn't seem to support the callback parameter, `+"falling back to call it without a callback: ",C),y[v](...z),w.fallbackToNoCallback=!1,w.noCallback=!0,A()}else w.noCallback?(y[v](...z),A()):y[v](...z,i({resolve:A,reject:B},w))})}},l=(v,w,x)=>{return new Proxy(w,{apply(y,z,A){return x.call(z,v,...A)}})};let m=Function.call.bind(Object.prototype.hasOwnProperty);const n=(v,w={},x={})=>{let y=Object.create(null),z={has(B,C){return C in v||C in y},get(B,C){if(C in y)return y[C];if(C in v){let E=v[C];if("function"==typeof E){if("function"==typeof w[C])E=l(v,v[C],w[C]);else if(m(x,C)){let F=k(C,x[C]);E=l(v,v[C],F)}else E=E.bind(v);}else if("object"==typeof E&&null!==E&&(m(w,C)||m(x,C)))E=n(E,w[C],x[C]);else return Object.defineProperty(y,C,{configurable:!0,enumerable:!0,get(){return v[C]},set(F){v[C]=F}}),E;return y[C]=E,E}},set(B,C,D){return C in y?y[C]=D:v[C]=D,!0},defineProperty(B,C,D){return Reflect.defineProperty(y,C,D)},deleteProperty(B,C){return Reflect.deleteProperty(y,C)}},A=Object.create(v);return new Proxy(A,z)},o=v=>({addListener(w,x,...y){w.addListener(v.get(x),...y)},hasListener(w,x){return w.hasListener(v.get(x))},removeListener(w,x){w.removeListener(v.get(x))}});let p=!1;const q=new g(v=>{return"function"==typeof v?function(x,y,z){let B,D,A=!1,C=new Promise(G=>{B=function(H){p||(console.warn("Returning a Promise is the preferred way to send a reply from an onMessage/onMessageExternal listener, as the sendResponse will be removed from the specs (See https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage)",new Error().stack),p=!0),A=!0,G(H)}});try{D=v(x,y,B)}catch(G){D=Promise.reject(G)}const E=!0!==D&&h(D);if(!0!==D&&!E&&!A)return!1;const F=G=>{G.then(H=>{z(H)},H=>{let I;I=H&&(H instanceof Error||"string"==typeof H.message)?H.message:"An unexpected error occurred",z({__mozWebExtensionPolyfillReject__:!0,message:I})}).catch(H=>{console.error("Failed to send onMessage rejected reply",H)})};return E?F(D):F(C),!0}:v}),r=({reject:v,resolve:w},x)=>{e.runtime.lastError?e.runtime.lastError.message==="The message port closed before a response was received."?w():v(e.runtime.lastError):x&&x.__mozWebExtensionPolyfillReject__?v(new Error(x.message)):w(x)},s=(v,w,x,...y)=>{if(y.length<w.minArgs)throw new Error(`Expected at least ${w.minArgs} ${j(w.minArgs)} for ${v}(), got ${y.length}`);if(y.length>w.maxArgs)throw new Error(`Expected at most ${w.maxArgs} ${j(w.maxArgs)} for ${v}(), got ${y.length}`);return new Promise((z,A)=>{const B=r.bind(null,{resolve:z,reject:A});y.push(B),x.sendMessage(...y)})},t={runtime:{onMessage:o(q),onMessageExternal:o(q),sendMessage:s.bind(null,"sendMessage",{minArgs:1,maxArgs:3})},tabs:{sendMessage:s.bind(null,"sendMessage",{minArgs:2,maxArgs:3})}},u={clear:{minArgs:1,maxArgs:1},get:{minArgs:1,maxArgs:1},set:{minArgs:1,maxArgs:1}};return f.privacy={network:{networkPredictionEnabled:u,webRTCIPHandlingPolicy:u},services:{passwordSavingEnabled:u},websites:{hyperlinkAuditingEnabled:u,referrersEnabled:u}},n(e,t,f)})(chrome)}else a.exports=browser});
+//# sourceMappingURL=browser-polyfill.min.js.map
+
+// webextension-polyfill v.0.4.0 (https://github.com/mozilla/webextension-polyfill)
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+/***/ }),
+
+/***/ "./src/shared/consts.js":
 /*!******************************!*\
-  !*** ./src/options/index.js ***!
+  !*** ./src/shared/consts.js ***!
   \******************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */   ERRORS: () => (/* binding */ ERRORS),
+/* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
+/* harmony export */   IMAGES_GALLERY_URL: () => (/* binding */ IMAGES_GALLERY_URL),
+/* harmony export */   MAX_FILE_NAME: () => (/* binding */ MAX_FILE_NAME),
+/* harmony export */   MESSAGES: () => (/* binding */ MESSAGES),
+/* harmony export */   SCRIPTS: () => (/* binding */ SCRIPTS)
 /* harmony export */ });
-/* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
-/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
-/* harmony import */ var _shared_markup__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../shared/markup */ "./src/shared/markup.js");
-const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+const MESSAGES = {
+  SAVE_CONTENT: "SAVE_CONTENT",
+  GET_PICTURE_URLS: "GET_PICTURE_URLS",
+  RECEIVE_IMAGES_URLS: "RECEIVE_IMAGES_URLS",
+  IMAGES_GALLERY_COMPLETED: "IMAGES_GALLERY_COMPLETED",
+  SAVE_ALL_CONTENT: "SAVE_ALL_CONTENT",
+  GET_IMAGE_URL_FOR_GALLERY: "GET_IMAGE_URL_FOR_GALLERY",
+  RECEIVE_ORIGINAL_URL: "RECEIVE_ORIGINAL_URL",
+  RECEIVE_ORIGINAL_IMAGE_URL: "RECEIVE_ORIGINAL_IMAGE_URL",
+};
 
-
-
-
-
-const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
-const FOLDERS_LIST = document.querySelector('.saveFoldersList');
-const SPECIAL_RULES_LIST = document.querySelector('.specialRulesList');
-
-const RULES_KEYS = ['url', 'thumbImg', 'image', 'naming', 'folder'];
-const NAMING_OPTIONS = ['Title', 'URL'];
-
-function init () {
-  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(FOLDERS_LIST, 'click', handleFolder);
-  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(SPECIAL_RULES_LIST, 'click', handleSpecialRules);
-  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)('.addNew', 'click', saveNewFolder);
-  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(".saveRulesButton", "click", saveSpecialRules);
-
-  browser.storage.onChanged.addListener(onStorageChange);
-
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].loadSettings().then(setupOptions);
+const EXTRACTION_REASON = {
+  DOWNLOAD: "DOWNLOAD",
+  NO_THUMB: "NO_THUMB",
+  FOR_GALLERY: "FOR_GALLERY",
 }
 
-async function setupOptions ({ saveFolders, specialRules }) {
-  await setupFoldersList(saveFolders);
-  await setupSpecialRules(specialRules);
-}
+const MAX_FILE_NAME = 100;
 
-async function setupSpecialRules (specialRules) {
-  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.emptyNode)(SPECIAL_RULES_LIST);
+const SCRIPTS = {
+  PAGE: "/page-script.js",
+  EXTRACT_ALL_IMAGES_URLS: "/extract-all-images-urls.js",
+  DOWNLOAD_ORIGINAL_IMAGE_URL: "/download-original-special-case.js",
+};
 
-  specialRules.forEach((params, rowIdx) => {
-    const row = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)("tr", "");
-    
-    params.forEach((value, i) => {
-      const name = RULES_KEYS[i];
-      let input;
+const IMAGES_GALLERY_URL = "/images-gallery/index.html";
 
-      switch (name) {
-        case "naming":
-          input = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createSelect)(value, NAMING_OPTIONS, [name]);
-          break;
-        default:
-          input = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)("input", value, [name]);
-          break;
-      }
+const ERRORS = {
+  INVALID_URL: "Invalid URL",
+};
 
-      const cell = document.createElement("td");
-      cell.appendChild(input);
-
-      row.appendChild(cell);
-    });
-
-    if (rowIdx !== specialRules.length - 1) {
-      const removeButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)("button", "Remove", [
-        "remove",
-        "attentionButton",
-      ]);
-      removeButton.dataset.index = rowIdx;
-      row.appendChild(removeButton);
-    }
-
-    SPECIAL_RULES_LIST.appendChild(row);
-  });
-}
-
-async function setupFoldersList(saveFolders) {
-  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.emptyNode)(FOLDERS_LIST);
-
-  saveFolders.forEach((folder, i) => {
-    if (!i) {
-      return;
-    }
-
-    const item = document.createElement('li');
-    const folderPath = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)('span', '/' + folder, ['folderPath']);
-    const editButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)('button', 'Edit', ['edit']);
-    editButton.dataset.folder = folder;
-    const removeButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)('button', 'Forget', ['remove', 'attentionButton']);
-    removeButton.dataset.folder = folder;
-    item.appendChild(folderPath);
-    item.appendChild(editButton);
-    item.appendChild(removeButton);
-
-    FOLDERS_LIST.appendChild(item);
-  });
-}
-
-function saveNewFolder () {
-  let newFolder = NEW_FOLDER_INPUT.value;
-  newFolder = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_1__.removeForbiddenCharacters)(newFolder).replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
-
-  if (newFolder.length) {
-    newFolder += '/';
-  }
-
-  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
-
-  if (!saveFolders.includes(newFolder)) {
-    saveFolders.push(newFolder);
-    saveFolders.sort();
-  }
-
-  browser.storage.local.set({ saveFolders, saveFolder: newFolder });
-
-  NEW_FOLDER_INPUT.value = '';
-}
-
-function handleFolder (e) {
-  const el = e.target;
-
-  if (el.classList.contains('edit')) {
-    editFolder( el.dataset.folder );
-    return;
-  }
-
-  if (el.classList.contains('remove')) {
-    removeFolder( el.dataset.folder );
-  }
-}
-
-function handleSpecialRules (e) {
-  const el = e.target;
-
-  if (el.classList.contains("remove")) {
-    removeRule(el.dataset.index);
-  }
-}
-
-function removeRule (index) {
-  const specialRules = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules();
-
-  specialRules.splice(index, 1);
-
-  browser.storage.local.set({ specialRules });
-}
-
-function editFolder (folder) {
-  NEW_FOLDER_INPUT.value = folder;
-  setTimeout(() => NEW_FOLDER_INPUT.focus());
-}
-
-function removeFolder (folder) {
-  const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
-  saveFolders.splice( saveFolders.indexOf(folder), 1 );
-
-  const saveFolder = folder === _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder() ? _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].rootFolder() : _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder();
-  
-  browser.storage.local.set({ saveFolders, saveFolder });
-}
-
-function saveSpecialRules () {
-  const newSpecialRules = [];
-
-  Array.from(SPECIAL_RULES_LIST.children).forEach((rulesRow) => {
-    const newRules = [];
-
-    Array.from(rulesRow.children).forEach((ruleCell) => {
-      const input = ruleCell.querySelector("[value]");
-
-      if (!input) {
-        return;
-      }
-
-      newRules.push(input.value);
-    });
-
-    newSpecialRules.push(newRules);
-  });
-
-  if (newSpecialRules[newSpecialRules.length - 1][0]) {
-    newSpecialRules.push(["", "", "", "", ""]);
-  }
-
-  browser.storage.local.set({ specialRules: newSpecialRules });
-}
-
-function onStorageChange (changes) {
-  for (let key in changes) {
-    _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"][key](changes[key].newValue);
-    if (key === 'saveFolders') {
-      setupFoldersList(changes[key].newValue);
-    }
-    if (key === "specialRules") {
-      setupSpecialRules(changes[key].newValue);
-    }
-  }
-}
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (init);
 
 /***/ }),
 
@@ -1538,127 +1402,6 @@ function hasClass (el, className) {
 }
 
 
-/***/ }),
-
-/***/ "./src/shared/state.js":
-/*!*****************************!*\
-  !*** ./src/shared/state.js ***!
-  \*****************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
-
-const EXTENSION_NAME = 'Save on Click';
-
-const DEFAULT_SETTINGS = {
-  saveFolder: EXTENSION_NAME + '/',
-  saveMethod: 'contextmenu',
-  saveFolders: ['', EXTENSION_NAME + '/']
-};
-
-const STATE = {
-  tabs: {},
-  active: false,
-  saveFolders: [],
-  saveFolder: "",
-  saveMethod: "",
-  tryOriginal: false,
-  savedOriginalUrls: [],
-  specialRules: [
-    ["", "", "", "", ""],
-  ],
-};
-
-const contextMenuKeys = [
-  "active",
-  "saveFolders",
-  "saveFolder",
-  "saveMethod",
-  "tryOriginal",
-  "galleryImagesTab",
-  "galleryImagesUrls",
-  "specialRules",
-  "savedOriginalUrls",
-  "isGalleryImagesSpecialRule",
-  "thumbsCount",
-  "isNoThumbCase",
-];
-
-const accessors = {};
-
-contextMenuKeys.forEach((stateName) => {
-
-  accessors[stateName] = (value) => {
-    if (typeof value !== 'undefined') {
-      STATE[stateName] = value;
-    }
-  
-    return STATE[stateName];
-  };
-
-});
-
-accessors.tabState = tabState;
-
-function tabState (tabId, tab) {
-  if (typeof tab !== 'undefined') {
-    STATE.tabs[tabId] = tab;
-  }
-
-  return STATE.tabs[tabId];
-}
-
-function get (keys) {
-  const values = {};
-
-  keys.forEach((key) => {
-    values[key] = accessors[key]();
-  });
-
-  return values;
-}
-
-function getContextMenuState () {
-  return get(contextMenuKeys);
-}
-
-function rootFolder () {
-  return DEFAULT_SETTINGS.saveFolders[0];
-}
-
-async function loadSettings () {
-  const savedOptions = await browser.storage.local.get();
-  
-  for (let key in DEFAULT_SETTINGS) {
-    if (typeof savedOptions[key] === 'undefined') {
-      savedOptions[key] = DEFAULT_SETTINGS[key];
-    }
-  }
-
-  Object.assign(STATE, savedOptions);
-  return STATE;
-}
-
-function updateFromStorage (storageChanges) {
-  for (let key in storageChanges) {
-    STATE[key] = storageChanges[key].newValue;
-  }
-}
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  ...accessors,
-  loadSettings,
-  getContextMenuState,
-  rootFolder,
-  updateFromStorage,
-});
-
-
 /***/ })
 
 /******/ 	});
@@ -1721,14 +1464,171 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
 "use strict";
-/*!************************!*\
-  !*** ./src/options.js ***!
-  \************************/
+/*!**********************************************!*\
+  !*** ./src/images-gallery/images-gallery.js ***!
+  \**********************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _options_index__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./options/index */ "./src/options/index.js");
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _shared_markup__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/markup */ "./src/shared/markup.js");
+/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
+const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyfill.min */ "./node_modules/webextension-polyfill/dist/browser-polyfill.min.js");
 
 
-(0,_options_index__WEBPACK_IMPORTED_MODULE_0__["default"])();
+
+
+
+const PAGE_TITLE = document.querySelector(".pageTitle");
+const PAGE_URL = document.querySelector(".pageUrl");
+const IMAGES_COUNT = document.querySelector('.totalCount');
+const DOWNLOAD_ALL = document.querySelector('.downloadAll');
+const IMAGES = document.querySelector(".images");
+const LAYOVER = document.querySelector(".layover");
+const BIG_IMAGE = document.querySelector(".bigImage");
+const POPUP_CONTAINER = document.querySelector(".popupContainer");
+
+browser.runtime.sendMessage({
+  type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.IMAGES_GALLERY_COMPLETED,
+});
+
+browser.runtime.onMessage.addListener(onMessage);
+
+function onMessage(message) {
+  switch (message.type) {
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_IMAGES_URLS:
+      buildPage(message);
+      break;
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL:
+      updateOriginalUrl(message);
+      break;
+  }
+}
+
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(IMAGES, "click", handleImage);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(LAYOVER, "click", switchLayover);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(BIG_IMAGE, "click", switchLayover);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(DOWNLOAD_ALL, "click", downloadAllImages);
+
+function buildPage (message) {
+  window.__PAGE_DATA = message;
+  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.emptyNode)(IMAGES);
+  const { title, url, urls } = message;
+  document.title = `All images for ${title}`;
+  PAGE_TITLE.textContent = title;
+  PAGE_URL.textContent = url;
+  IMAGES_COUNT.textContent = message.urls.length;
+
+  urls.forEach(({ thumbUrl, originalUrl }) => {
+    const card = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", ["card"]);
+    const img = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("img", thumbUrl, ["image"]);
+    img.dataset.originalPictureHref = originalUrl;
+
+    if (originalUrl && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isVideo)(originalUrl)) {
+      img.classList.add("video");
+    } 
+
+    const downloadButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("button", "", ["download"]);
+    downloadButton.title = "Download";
+    downloadButton.dataset.originalPictureHref = originalUrl;
+    downloadButton.dataset.title = message.title;
+    downloadButton.dataset.href = message.url;
+    downloadButton.dataset.url = thumbUrl;
+
+    card.appendChild(img);
+    card.appendChild(downloadButton);
+    IMAGES.appendChild(card);
+  });
+}
+
+function handleImage (e) {
+  e.stopPropagation();
+
+  if ((0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.hasClass)(e.target, "download")) {
+    downloadImage(e);
+    return;
+  }
+
+  if ((0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.hasClass)(e.target, "image")) {
+    showOriginal(e);
+    return;
+  }
+}
+
+async function downloadImage (e) {
+  const { href, url, title, originalPictureHref } = e.target.dataset;
+  const { isPreloaded, originalUrl } = getOriginalUrl(url);
+
+  browser.runtime.sendMessage({
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_URL,
+    title,
+    originalPictureHref,
+    href,
+    isFromGallery: true,
+    url: isPreloaded ? originalUrl : url,
+    isPreloaded,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.DOWNLOAD,
+  });
+}
+
+async function showOriginal(e) {
+  switchLayover(e);
+
+  const { title, url } = window.__PAGE_DATA;
+  const { originalPictureHref } = e.target.dataset;
+  const { isPreloaded, originalUrl } = getOriginalUrl(e.target.src);
+
+  if (isPreloaded) {
+    updateBigPicture(originalUrl);
+    return;
+  }
+
+  browser.runtime.sendMessage({
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.GET_IMAGE_URL_FOR_GALLERY,
+    tabId: window.__PAGE_DATA.tabId,
+    title,
+    originalPictureHref,
+    href: url,
+    isFromGallery: true,
+    url: e.target.src,
+    isPreloaded: e.target.src === originalPictureHref,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.FOR_GALLERY,
+  });
+}
+
+async function downloadAllImages () {
+  const { title, url, urls } = window.__PAGE_DATA;
+
+  browser.runtime.sendMessage({
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.SAVE_ALL_CONTENT,
+    title,
+    href: url,
+    isFromGallery: true,
+    urls,
+  }); 
+}
+
+function switchLayover () {
+  LAYOVER.classList.toggle("show");
+  BIG_IMAGE.classList.remove("show");
+  POPUP_CONTAINER.classList.toggle("show");
+}
+
+function updateOriginalUrl (message) {
+  const item = window.__PAGE_DATA.urls.find((el) => el.originalUrl === message.href);
+  item.originalUrl = message.originalUrl;
+  item.isPreloaded = true;
+  updateBigPicture(message.originalUrl);
+}
+
+function updateBigPicture (src) {
+  BIG_IMAGE.style.maxHeight = `${window.innerHeight}px`;
+  BIG_IMAGE.src = src;
+}
+function getOriginalUrl (thumbUrl) {
+  const item = window.__PAGE_DATA.urls.find((url) => url.thumbUrl === thumbUrl);
+
+  return item || {};
+}
 
 })();
 

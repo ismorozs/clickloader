@@ -2,20 +2,70 @@ const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
 import { removeForbiddenCharacters } from '../shared/helpers';
+import { createElement, createSelect, emptyNode, setupEventHandler } from '../shared/markup';
 
 const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
-const FOLDERS_LIST = document.querySelector('.saveFolders');
+const FOLDERS_LIST = document.querySelector('.saveFoldersList');
+const SPECIAL_RULES_LIST = document.querySelector('.specialRulesList');
+
+const RULES_KEYS = ['url', 'thumbImg', 'image', 'naming', 'folder'];
+const NAMING_OPTIONS = ['Title', 'URL'];
 
 function init () {
-  FOLDERS_LIST.addEventListener('click', (e) => handleFolder(e));
-  document.querySelector('.addNew').addEventListener('click', (e) => saveNewFolder(e));
+  setupEventHandler(FOLDERS_LIST, 'click', handleFolder);
+  setupEventHandler(SPECIAL_RULES_LIST, 'click', handleSpecialRules);
+  setupEventHandler('.addNew', 'click', saveNewFolder);
+  setupEventHandler(".saveRulesButton", "click", saveSpecialRules);
 
   browser.storage.onChanged.addListener(onStorageChange);
 
-  State.loadSettings().then(setupFoldersList);
+  State.loadSettings().then(setupOptions);
 }
 
-async function setupFoldersList({ saveFolders }) {
+async function setupOptions ({ saveFolders, specialRules }) {
+  await setupFoldersList(saveFolders);
+  await setupSpecialRules(specialRules);
+}
+
+async function setupSpecialRules (specialRules) {
+  emptyNode(SPECIAL_RULES_LIST);
+
+  specialRules.forEach((params, rowIdx) => {
+    const row = createElement("tr", "");
+    
+    params.forEach((value, i) => {
+      const name = RULES_KEYS[i];
+      let input;
+
+      switch (name) {
+        case "naming":
+          input = createSelect(value, NAMING_OPTIONS, [name]);
+          break;
+        default:
+          input = createElement("input", value, [name]);
+          break;
+      }
+
+      const cell = document.createElement("td");
+      cell.appendChild(input);
+
+      row.appendChild(cell);
+    });
+
+    if (rowIdx !== specialRules.length - 1) {
+      const removeButton = createElement("button", "Remove", [
+        "remove",
+        "attentionButton",
+      ]);
+      removeButton.dataset.index = rowIdx;
+      row.appendChild(removeButton);
+    }
+
+    SPECIAL_RULES_LIST.appendChild(row);
+  });
+}
+
+async function setupFoldersList(saveFolders) {
   emptyNode(FOLDERS_LIST);
 
   saveFolders.forEach((folder, i) => {
@@ -27,7 +77,7 @@ async function setupFoldersList({ saveFolders }) {
     const folderPath = createElement('span', '/' + folder, ['folderPath']);
     const editButton = createElement('button', 'Edit', ['edit']);
     editButton.dataset.folder = folder;
-    const removeButton = createElement('button', 'Forget', ['remove']);
+    const removeButton = createElement('button', 'Forget', ['remove', 'attentionButton']);
     removeButton.dataset.folder = folder;
     item.appendChild(folderPath);
     item.appendChild(editButton);
@@ -35,19 +85,6 @@ async function setupFoldersList({ saveFolders }) {
 
     FOLDERS_LIST.appendChild(item);
   });
-}
-
-function createElement (type, text, classNames) {
-  const button = document.createElement(type);
-  button.appendChild( document.createTextNode(text) );
-  button.classList.add(...classNames);
-  return button;
-}
-
-function emptyNode (node) {
-  while (node.hasChildNodes()) {
-    node.removeChild(node.firstChild);
-  }
 }
 
 function saveNewFolder () {
@@ -83,6 +120,22 @@ function handleFolder (e) {
   }
 }
 
+function handleSpecialRules (e) {
+  const el = e.target;
+
+  if (el.classList.contains("remove")) {
+    removeRule(el.dataset.index);
+  }
+}
+
+function removeRule (index) {
+  const specialRules = State.specialRules();
+
+  specialRules.splice(index, 1);
+
+  browser.storage.local.set({ specialRules });
+}
+
 function editFolder (folder) {
   NEW_FOLDER_INPUT.value = folder;
   setTimeout(() => NEW_FOLDER_INPUT.focus());
@@ -97,11 +150,40 @@ function removeFolder (folder) {
   browser.storage.local.set({ saveFolders, saveFolder });
 }
 
+function saveSpecialRules () {
+  const newSpecialRules = [];
+
+  Array.from(SPECIAL_RULES_LIST.children).forEach((rulesRow) => {
+    const newRules = [];
+
+    Array.from(rulesRow.children).forEach((ruleCell) => {
+      const input = ruleCell.querySelector("[value]");
+
+      if (!input) {
+        return;
+      }
+
+      newRules.push(input.value);
+    });
+
+    newSpecialRules.push(newRules);
+  });
+
+  if (newSpecialRules[newSpecialRules.length - 1][0]) {
+    newSpecialRules.push(["", "", "", "", ""]);
+  }
+
+  browser.storage.local.set({ specialRules: newSpecialRules });
+}
+
 function onStorageChange (changes) {
   for (let key in changes) {
     State[key](changes[key].newValue);
     if (key === 'saveFolders') {
-      setupFoldersList({ saveFolders: changes[key].newValue });
+      setupFoldersList(changes[key].newValue);
+    }
+    if (key === "specialRules") {
+      setupSpecialRules(changes[key].newValue);
     }
   }
 }

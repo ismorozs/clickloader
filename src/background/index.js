@@ -1,7 +1,8 @@
 const browser = require('webextension-polyfill');
 
+import { EXTRACTION_REASON, MESSAGES } from '../shared/consts';
 import State from '../shared/state';
-import { runUserScript, saveContent } from './actions';
+import { runUserScript, saveContent, createImagesPage, sendImagesUrls, saveOriginalUrl, saveAllContent, getOriginalImageUrlForGallery, sendOriginalImageUrltoGallery } from './actions';
 import { setupContextMenu, onContextMenuClicked } from './context-menu';
 
 function init () {
@@ -9,10 +10,49 @@ function init () {
   browser.tabs.onRemoved.addListener(onTabRemoved);
   browser.tabs.onActivated.addListener(onTabActivated);
   browser.tabs.onUpdated.addListener(onTabUpdated);
-  browser.runtime.onMessage.addListener(saveContent);
+  browser.runtime.onMessage.addListener(onMessage);
   browser.contextMenus.onClicked.addListener(onContextMenuClicked);
 
   State.loadSettings().then(setupContextMenu);
+}
+
+async function onMessage (message) {
+  switch (message.type) {
+
+    case MESSAGES.RECEIVE_ORIGINAL_URL:
+      if (message.tabWithOriginId) {
+        browser.tabs.remove([message.tabWithOriginId]);
+      }
+
+      switch (message.reason) {
+        case EXTRACTION_REASON.DOWNLOAD:
+          saveContent(message);
+          break;
+        case EXTRACTION_REASON.NO_THUMB:
+          saveOriginalUrl(message);
+          break;
+        case EXTRACTION_REASON.FOR_GALLERY:
+          sendOriginalImageUrltoGallery(message);
+          break;
+      }
+      break;
+
+    case MESSAGES.SAVE_ALL_CONTENT:
+      saveAllContent(message);
+      break;
+
+    case MESSAGES.RECEIVE_IMAGES_URLS:
+      createImagesPage(message);
+      break;
+
+    case MESSAGES.GET_IMAGE_URL_FOR_GALLERY:
+      getOriginalImageUrlForGallery(message);
+      break;
+
+    case MESSAGES.IMAGES_GALLERY_COMPLETED:
+      sendImagesUrls();
+      break;
+  }
 }
 
 function onTabActivated (data) {

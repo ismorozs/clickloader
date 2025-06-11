@@ -1,9 +1,8 @@
 const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
-import { getCurrentTab, isHTTPUrl, removeForbiddenCharacters } from '../shared/helpers';
-
-const MAX_FILE_NAME = 200;
+import { MESSAGES, MAX_FILE_NAME, SCRIPTS, IMAGES_GALLERY_URL, EXTRACTION_REASON, ERRORS } from '../shared/consts';
+import { executeScript, extractExtension, getCurrentTab, isHTTPUrl, removeForbiddenCharacters } from '../shared/helpers';
 
 export async function runUserScript (newActiveState, newSaveMethod, tab) {
   if (!tab) {
@@ -14,7 +13,7 @@ export async function runUserScript (newActiveState, newSaveMethod, tab) {
     return !newActiveState;
   }
 
-  let executeScript = Promise.resolve();
+  let executeScriptPromise = Promise.resolve();
   let sendMessage = () => {};
 
   const stateOnTab = State.tabState(tab.id);
@@ -24,29 +23,167 @@ export async function runUserScript (newActiveState, newSaveMethod, tab) {
       return false;
     }
 
-    executeScript = browser.tabs.executeScript(tab.id, { file: '/page-script.js' });
+    executeScriptPromise = executeScript(tab.id, SCRIPTS.PAGE);
   }
 
   if (!stateOnTab || stateOnTab.url !== tab.url || stateOnTab.active !== newActiveState || stateOnTab.saveMethod !== newSaveMethod) {
-    sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active: newActiveState, saveMethod: newSaveMethod });
+    sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active: newActiveState, saveMethod: newSaveMethod, specialCases: State.specialRules() });
   }
 
   State.tabState(tab.id, { id: tab.id, active: newActiveState, saveMethod: newSaveMethod, url: tab.url });
 
-  executeScript.then(sendMessage);
+  executeScriptPromise.then(sendMessage);
   return newActiveState;
 }
 
-export function saveContent ({ name, src, extension }) {
-  const sourceExtension = src
-    .split(".")
-    .slice(-1)[0]
-    .split("?")[0]
-    .split("/")[0];
-  const handledName = removeForbiddenCharacters(name, true).substring(0, MAX_FILE_NAME);
-  browser.downloads.download({
-    url: src,
-    saveAs: false,
-    filename: `${State.saveFolder()}${handledName}.${sourceExtension}${extension}`,
+export async function extractAllImageUrls () {
+  const tab = await getCurrentTab();
+  await executeScript(tab.id, SCRIPTS.EXTRACT_ALL_IMAGES_URLS);
+  browser.tabs.sendMessage(tab.id, { type: MESSAGES.GET_PICTURE_URLS, specialRules: State.specialRules() })
+}
+
+export async function createImagesPage (message) {
+  const tab = await browser.tabs.create({
+    active: true,
+    url: IMAGES_GALLERY_URL,
   });
+
+  State.isGalleryImagesSpecialRule(message.isSpecialRule);
+  State.galleryImagesTab(tab);
+  State.galleryImagesUrls(message);
+  State.thumbsCount(message.urls.length);
+
+  if (!message.urls[0].thumbUrl) {
+    State.isNoThumbCase(true);
+    const specialRule = getSpecialRule(message.url, State.specialRules());
+    for (let i = 0; i < message.urls.length; i++) {
+      await getOriginalImageUrl({ pageUrl: message.urls[i].originalUrl, imageSelector: specialRule[2], reason: EXTRACTION_REASON.NO_THUMB });
+    }
+  }
+}
+
+export async function changeThumbUrlsToOriginalUrls () {
+  const newUrls = State.savedOriginalUrls().map(({ url }) => ({
+    thumbUrl: url,
+    originalUrl: url,
+    isPreloaded: true,
+  }));
+
+  const galleryData = State.galleryImagesUrls();
+  galleryData.urls = newUrls;
+
+  State.galleryImagesUrls(galleryData);
+}
+
+export async function sendImagesUrls () {
+  const tab = State.galleryImagesTab();
+  const urls = State.galleryImagesUrls();
+  const isSpecialRule = State.isGalleryImagesSpecialRule();
+
+  if (!State.isNoThumbCase()); {
+    State.savedOriginalUrls([]);
+  }
+
+  browser.tabs.sendMessage(tab.id, { ...urls, tabId: tab.id, isSpecialRule, type: MESSAGES.RECEIVE_IMAGES_URLS });
+}
+
+export async function saveOriginalUrl (message) {
+  const savedOriginalUrls = State.savedOriginalUrls();
+  savedOriginalUrls.push(message);
+  State.savedOriginalUrls(savedOriginalUrls);
+
+  if (State.thumbsCount() === savedOriginalUrls.length) {
+    changeThumbUrlsToOriginalUrls();
+    State.isNoThumbCase(false);
+    sendImagesUrls();
+  }
+}
+
+export async function saveContent (message) {
+  const { title, url, originalPictureHref, href, isFromSpecialCase, isFromGallery, isPreloaded } = message;
+  const specialRule = getSpecialRule(href, State.specialRules());
+  const tryOriginal = State.tryOriginal();
+  const isValidOriginalPictureHref =
+    originalPictureHref &&
+    originalPictureHref.length &&
+    originalPictureHref !== "null";
+
+  if (
+    isValidOriginalPictureHref &&
+    !isPreloaded &&
+    !isFromSpecialCase &&
+    specialRule[2] &&
+    (isFromGallery || tryOriginal)
+  ) {
+    await getOriginalImageUrl({
+      pageUrl: originalPictureHref,
+      imageSelector: specialRule[2],
+      reason: EXTRACTION_REASON.DOWNLOAD,
+    });
+    return;
+  }
+
+  const saveFolder =
+    (specialRule[4] && `${specialRule[4]}/`) || State.saveFolder();
+
+  const extension = extractExtension(url || originalPictureHref);
+  const rawName = specialRule[3] === "URL" ? href : title;
+  const handledName = removeForbiddenCharacters(rawName, true).substring(0, MAX_FILE_NAME);
+  const name = `${saveFolder}${handledName}.${extension}`;
+  const downloadUrl =
+    tryOriginal && !specialRule[2] && isValidOriginalPictureHref
+      ? originalPictureHref
+      : url;
+
+  try {
+    await download(downloadUrl, name);
+  } catch (e) {
+    console.error(e.message, " !!! error during downloading")
+    if (e.message === ERRORS.INVALID_URL) {
+      await download(url, name);
+    }
+  }
+}
+
+export async function saveAllContent (message) {
+  for (let i = 0; i < message.urls.length; i++) {
+    const { thumbUrl, originalUrl, isPreloaded } = message.urls[i];
+    const originalPictureHref = originalUrl !== "null" ? originalUrl : '';
+    const url = isPreloaded ? originalUrl : thumbUrl;
+
+    await saveContent({ ...message, url: thumbUrl, originalPictureHref, type: MESSAGES.SAVE_CONTENT, isPreloaded });
+  }
+}
+
+async function download (url, filename) {
+  await browser.downloads.download({ url, saveAs: false, filename });
+}
+
+export async function getOriginalImageUrlForGallery (message) {
+  const specialRule = getSpecialRule(message.originalPictureHref, State.specialRules());
+  getOriginalImageUrl({ pageUrl: message.originalPictureHref, imageSelector: specialRule[2], reason: EXTRACTION_REASON.FOR_GALLERY, tabId: message.tabId });
+}
+
+export async function sendOriginalImageUrltoGallery ({ tabId, href, url }) {
+  browser.tabs.sendMessage(tabId, { href, originalUrl: url, type: MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL });
+}
+
+async function getOriginalImageUrl ({ pageUrl, imageSelector, reason, tabId }) {
+  const newTab = await browser.tabs.create({
+    url: pageUrl,
+    active: false,
+  });
+
+  await executeScript(newTab.id, SCRIPTS.DOWNLOAD_ORIGINAL_IMAGE_URL);
+  await browser.tabs.sendMessage(newTab.id, { imageSelector, reason, tabId, tabWithOriginId: newTab.id });
+}
+
+export function getSpecialRule (url, specialRules) {
+  for (const params of specialRules) {
+    if (url.startsWith(params[0])) {
+      return params;
+    }
+  }
+
+  return [];
 }

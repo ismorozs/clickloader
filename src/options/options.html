@@ -9,12 +9,43 @@
   </head>
 
   <body>
-    <h1>Save folders <span>(relative to the default save folder)</span></h1>
-    <form class="form">
-      <input type="text" class="newFolder"><button class="addNew">Add new</button>
-    </form>
+    <div class="main">
+      <div class="saveFolders">
+        <h1>Save folders <span>(relative to the default save folder)</span></h1>
+        <form class="form">
+          <input type="text" class="newFolder"><button class="addNew bigButton">Add new</button>
+        </form>
 
-    <ul class="saveFolders"></ul>
+        <ul class="saveFoldersList"></ul>
+      </div>
+      
+    </div>
+    <div class="specialRules">
+        <h1>Special Rules</h1>
+        <p class="tips">
+          <span>1. <strong>URL</strong> - URL of the page you wish download the image from, may not be full, but must start exactly as in the address bar</span>
+          <span>2. <strong>Thumbnail</strong> - CSS selector of the thumbnail (very rare need to specify, the extension knows that usually it's something with "src" attribute)</span>
+          <span>3. <strong>Original Image</strong> - CSS selector of the image on the next page where the link leads to (for cases when it's a fullfleged html page)</span>
+          <span>4. <strong>Naming</strong> - how the image being downloaded will be named</span>
+          <span>5. <strong>Folder</strong> - folder name to save the image to</span>
+          <span>(no need to fill out all inputs)</span>
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>URL</th>
+              <th>Thumbnail</th>
+              <th>Original Image</th>
+              <th>Naming</th>
+              <th>Folder</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody class="specialRulesList"></tbody>
+        </table>
+        <button class="bigButton successButton saveRulesButton">Save</button>
+
+      </div>
     <script type="text/javascript" src="options.js"></script>
   </body>
 </html>

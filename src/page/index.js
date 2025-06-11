@@ -1,20 +1,26 @@
 const browser = require("webextension-polyfill/dist/browser-polyfill.min");
 
-import SPECIAL_CASES from './specialSaveCases';
-
-const SITE_SPECIAL_CASES = SPECIAL_CASES[window.location.hostname];
+import { getSpecialRule } from '../background/actions';
+import { tryFindHref } from '../shared/helpers';
+import { EXTRACTION_REASON, MESSAGES } from '../shared/consts';
 
 function init () {
   if (!window.hasRun) {
     window.hasRun = true;
-  
     browser.runtime.onMessage.addListener(onMessage);
   }
 }
 
 function onMessage (message) {
-  switchClickHandler(message);
-  window.saveMethod = message.saveMethod;
+  switch (message.type) {
+    case MESSAGES.RECEIVE_IMAGES_URLS:
+      break;
+
+    default:
+      switchClickHandler(message);
+      window.saveMethod = message.saveMethod;
+      window.specialRules = message.specialCases;
+  }
 }
 
 function switchClickHandler (data) {
@@ -31,52 +37,49 @@ function sendImageUrl (e) {
     return;
   }
 
-  const srcData = extractSrc(e.target);
-  if (srcData.src) {
+  const { url, originalPictureHref } = extractSrc(e.target);
+  if (url || originalPictureHref) {
     browser.runtime.sendMessage({
-      name: document.title,
-      src: srcData.src,
-      extension: srcData.extension || '',
+      type: MESSAGES.RECEIVE_ORIGINAL_URL,
+      title: document.title,
+      url,
+      originalPictureHref,
+      href: document.location.href,
+      reason: EXTRACTION_REASON.DOWNLOAD,
     });
   }
 }
 
 function extractSrc (el) {
-  if (SITE_SPECIAL_CASES) {
-    for (let selector in SITE_SPECIAL_CASES) {
-      if (el.matches(selector)) {
-        return SITE_SPECIAL_CASES[selector](el);
-      }
-    }
-  }
-
-  if (!!el.src) {
-    return { src: el.src };
-  }
+  const specialRule = getSpecialRule(
+    document.location.href,
+    window.specialRules
+  );
+  let url;
 
   const testEl = document.createElement(el.tagName);
   const possibleSources = el.querySelectorAll('source');
+  if (possibleSources.length) {
+    for (let i = 0; i < possibleSources.length; i++) {
+      const source = possibleSources[i];
 
-  if (!possibleSources.length) {
-    return {};
-  }
-
-  let src = null;
-  for (let i = 0; i < possibleSources.length; i++) {
-    const source = possibleSources[i];
-
-    if (!!testEl.canPlayType(source.type)) {
-      src = source.src;
-      break;
+      if (!!testEl.canPlayType(source.type)) {
+        url = source.src;
+        break;
+      }
     }
 
+    if (!url) {
+      url = possibleSources[0].src;
+    }
+  } else {
+    url = el.src;
   }
 
-  if (!src) {
-    src = possibleSources[0].src;
-  }
+  const a = el.closest("a");
+  const originalPictureHref = a && a.href;
 
-  return { src };
+  return { url, originalPictureHref };
 }
 
 export default init;

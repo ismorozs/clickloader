@@ -12,11 +12,29 @@ const STATE = {
   tabs: {},
   active: false,
   saveFolders: [],
-  saveFolder: '',
-  saveMethod: '',
+  saveFolder: "",
+  saveMethod: "",
+  tryOriginal: false,
+  savedOriginalUrls: [],
+  specialRules: [
+    ["", "", "", "", ""],
+  ],
 };
 
-const contextMenuKeys = ['active', 'saveFolders', 'saveFolder', 'saveMethod'];
+const contextMenuKeys = [
+  "active",
+  "saveFolders",
+  "saveFolder",
+  "saveMethod",
+  "tryOriginal",
+  "galleryImagesTab",
+  "galleryImagesUrls",
+  "specialRules",
+  "savedOriginalUrls",
+  "isGalleryImagesSpecialRule",
+  "thumbsCount",
+  "isNoThumbCase",
+];
 
 const accessors = {};
 

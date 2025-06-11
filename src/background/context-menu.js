@@ -1,7 +1,7 @@
 const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
-import { runUserScript } from './actions';
+import { extractAllImageUrls, runUserScript } from './actions';
 
 const SETTINGS_PAGE_URL = '/options/options.html';
 
@@ -11,22 +11,62 @@ const EVENT_MEANINGS = {
   dblclick: 'Double-click',
 };
 
+const TRY_ORIGINAL_STATES = ['Disabled', 'Download original'];
+
 const CONTEXT_MENU = {
-  MAIN: { ID: 'MAIN', TITLE: (bool) => 'Save on Click' + (bool ? ' (active)' : '') },
+  MAIN: { ID: 'MAIN', TITLE: (isActive, tryOriginal) => {
+      return `Save on Click ${isActive ? '(active)' : ''} ${tryOriginal ? '(+)' : ''}`
+    }
+  },
   SWITCH: { ID: 'S', TITLE: (bool) => bool ? 'Disable' : 'Enable' },
   FOLDER_SUBMENU: { ID: 'F', TITLE: (currentFolder) => 'Save folder: /' + currentFolder },
   MANAGE_FOLDERS: { ID: 'N', TITLE: 'Manage folders' },
   METHOD_SUBMENU: { ID: 'M', TITLE: (currentMethod) => 'Save method: ' + EVENT_MEANINGS[currentMethod] },
+  TRY_DOWNLOAD_ORIGINAL: { ID: 'O', TITLE: (currentTryOriginal) => buildTryOriginalTitle(currentTryOriginal) },
+  SHOW_PICTURES_GALERY: { ID: 'G', TITLE: 'Show page pictures' },
+  CUSTOMIZE: { ID: 'C', TITLE: 'Customize special rules' },
+  SEPARATOR1: { ID: 'SEPARATOR1' },
+  SEPARATOR2: { ID: 'SEPARATOR2' },
+  SEPARATOR3: { ID: 'SEPARATOR3' },
+  SEPARATOR4: { ID: 'SEPARATOR4' },
 };
 
-export function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod }) {
+function buildTryOriginalTitle (currentTryOriginal) {
+  return `Try download original ${currentTryOriginal ? '(+)' : ''}`;
+}
+
+export function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, tryOriginal }) {
   browser.contextMenus.removeAll().then(() => {
-    browser.contextMenus.create({ id: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.MAIN.TITLE(active), contexts: ["all"] });
+    browser.contextMenus.create({ id: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.MAIN.TITLE(active, tryOriginal), contexts: ["all"] });
     browser.contextMenus.create({ id: CONTEXT_MENU.SWITCH.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.SWITCH.TITLE(active), contexts: ["all"] });
-    browser.contextMenus.create({ parentId: CONTEXT_MENU.MAIN.ID, type: 'separator' });
+    setupTryDownloadOrignalSubmenu(tryOriginal);
+    browser.contextMenus.create({ id: CONTEXT_MENU.SEPARATOR4.ID, parentId: CONTEXT_MENU.MAIN.ID, type: 'separator' });
 
     setupFolderSubmenu(saveFolders, saveFolder);
     setupMethodSubmenu(saveMethod);
+
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.SEPARATOR1.ID,
+      parentId: CONTEXT_MENU.MAIN.ID,
+      type: "separator",
+    });
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.SHOW_PICTURES_GALERY.ID,
+      parentId: CONTEXT_MENU.MAIN.ID,
+      title: CONTEXT_MENU.SHOW_PICTURES_GALERY.TITLE,
+      contexts: ["all"],
+    });
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.SEPARATOR2.ID,
+      parentId: CONTEXT_MENU.MAIN.ID,
+      type: "separator",
+    });
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.CUSTOMIZE.ID,
+      parentId: CONTEXT_MENU.MAIN.ID,
+      title: CONTEXT_MENU.CUSTOMIZE.TITLE,
+      contexts: ["all"],
+    });
   });
 }
 
@@ -40,11 +80,37 @@ function setupMethodSubmenu (currentSaveMethod) {
   }); 
 }
 
+function setupTryDownloadOrignalSubmenu (currentTryOriginal) {
+  browser.contextMenus.create({
+    id: CONTEXT_MENU.TRY_DOWNLOAD_ORIGINAL.ID,
+    parentId: CONTEXT_MENU.MAIN.ID,
+    title: buildTryOriginalTitle(currentTryOriginal),
+    contexts: ["all"],
+  });
+
+  TRY_ORIGINAL_STATES.forEach((title, i) => {
+    const checked = i === 0 && !currentTryOriginal || i === 1 && currentTryOriginal;
+
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.TRY_DOWNLOAD_ORIGINAL.ID + i,
+      parentId: CONTEXT_MENU.TRY_DOWNLOAD_ORIGINAL.ID,
+      title,
+      contexts: ["all"],
+      type: "radio",
+      checked,
+    });
+  });
+}
+
 function setupFolderSubmenu (saveFolders, currentSaveFolder) {
   browser.contextMenus.create({ id: CONTEXT_MENU.FOLDER_SUBMENU.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.FOLDER_SUBMENU.TITLE(currentSaveFolder), contexts: ["all"] });
 
   browser.contextMenus.create({ id: CONTEXT_MENU.MANAGE_FOLDERS.ID, parentId: CONTEXT_MENU.FOLDER_SUBMENU.ID, title: CONTEXT_MENU.MANAGE_FOLDERS.TITLE, contexts: ["all"] });
-  browser.contextMenus.create({ parentId: CONTEXT_MENU.FOLDER_SUBMENU.ID, type: 'separator' });
+  browser.contextMenus.create({
+    id: CONTEXT_MENU.SEPARATOR3.ID,
+    parentId: CONTEXT_MENU.FOLDER_SUBMENU.ID,
+    type: "separator",
+  });
   saveFolders.forEach((folder, i) => {
     const isActive = folder === currentSaveFolder;
     browser.contextMenus.create({ id: CONTEXT_MENU.FOLDER_SUBMENU.ID + i, parentId: CONTEXT_MENU.FOLDER_SUBMENU.ID, title: '/' + folder, contexts: ["all"], type: 'radio', checked: isActive });
@@ -63,7 +129,19 @@ export function onContextMenuClicked (info) {
 
     case CONTEXT_MENU.MANAGE_FOLDERS.ID:
       openSettings();
-      return
+      return;
+
+    case CONTEXT_MENU.CUSTOMIZE.ID:
+      openSettings();
+      return;
+
+    case CONTEXT_MENU.TRY_DOWNLOAD_ORIGINAL.ID:
+      changeTryDownloadOriginal(info.menuItemId[1]);
+      return;
+
+    case CONTEXT_MENU.SHOW_PICTURES_GALERY.ID:
+      openPagePictures();
+      return;
 
     case CONTEXT_MENU.FOLDER_SUBMENU.ID:
       changeSaveFolder(info.menuItemId[1]);
@@ -77,6 +155,10 @@ async function onSwitchClicked () {
   setupContextMenu( State.getContextMenuState() );
 }
 
+function changeTryDownloadOriginal (tryOriginal) {
+  browser.storage.local.set({ tryOriginal: Boolean(+tryOriginal) });
+}
+
 function changeSaveMethod (methodIdx) {
   const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
   browser.storage.local.set({ saveMethod });
@@ -85,6 +167,10 @@ function changeSaveMethod (methodIdx) {
 
 function openSettings () {
   browser.tabs.create({ active: true, url: SETTINGS_PAGE_URL });
+}
+
+async function openPagePictures () {
+  extractAllImageUrls();
 }
 
 function changeSaveFolder (folderIdx) {

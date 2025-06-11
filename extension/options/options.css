@@ -5,11 +5,14 @@ body {
 }
 
 input {
-  width: 300px;
   border: none;
   border-bottom: 2px solid black;
   font-size: 18px;
   line-height: 1.3;
+}
+
+.newFolder {
+  width: 300px;
 }
 
 input:focus {
@@ -35,14 +38,23 @@ button:hover {
   cursor: pointer;
 }
 
-.addNew {
+button:active {
+  transform: scale(1.02);
+}
+
+.main {
+  display: flex;
+  gap: 50px;
+}
+
+.bigButton {
   font-size: 18px;
   padding: 5px 15px;
   vertical-align: bottom;
   margin-left: 10px;
 }
 
-.saveFolders {
+.saveFoldersList {
   margin-top: 40px;
   padding-left: 15px;
   list-style: none;
@@ -56,9 +68,14 @@ li {
   padding-right: 15px;
 }
 
-.remove:hover {
+.attentionButton:hover {
   border-color: #dc0000;
   color: #dc0000;
+}
+
+.successButton:hover {
+  border-color: #3CB371;
+  color: #3CB371;
 }
 
 h1 {
@@ -68,4 +85,56 @@ h1 {
 h1 span {
   font-size: 16px;
   font-weight: 300;
+}
+
+
+th {
+  padding: 5px;
+}
+
+.specialRules h1 {
+  margin-bottom: 30px;
+}
+
+.specialRules span {
+  font-size: 15px;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.tips span:last-child {
+  margin-top: 10px;
+}
+
+.specialRules table {
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+th {
+  text-align: left;
+}
+
+td input {
+  width: 300px;
+}
+
+.url {
+  width: 400px;
+}
+
+.thumbImg {
+  width: 150px;
+}
+
+.image {
+  width: 450px;
+}
+
+th, td {
+  padding: 10px;
+}
+
+.specialRules .remove {
+  transform: translate(0, 8px);
 }
