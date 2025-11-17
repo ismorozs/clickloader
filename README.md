@@ -20,3 +20,16 @@ in the root folder of the repository.
 
 ---
 All the files for the extension that are actually loaded into the browser are stored in ``./extension`` folder.
+
+
+---
+Due to differences arising in the developing approach for Gecho-based broswers and others. ``manifest.json`` file should look slightly different for each browser.
+
+
+``./extension/manifest.json`` file contains data for making the extension work on Gecko-based browsers (Firefox, for example).
+
+
+To make it work for others like Chrome or Opera, change the contents of ``./extension/manifest.json`` to what is contained in ``./manifest.Blink.json``
+
+
+Correspondingly, ``./manifest.Gecko.json`` contains lines for Gecko-based browsers.
