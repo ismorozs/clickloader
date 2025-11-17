@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Save on Click",
+  "version": "1.1.5",
+
+  "description": "Simple extension for downloading pictures and other media content by just clicking on them",
+  "homepage_url": "https://github.com/ismorozs/clickloader",
+
+  "icons": {
+    "16": "icons/16.png",
+    "19": "icons/19.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "64": "icons/64.png",
+    "128": "icons/128.png"
+  },
+
+  "permissions": ["scripting", "tabs", "downloads", "storage", "contextMenus"],
+
+  "host_permissions": ["*://*/*"],
+
+  "background": {
+    "service_worker": "background-script.js"
+  },
+
+  "author": "Igor Morozov"
+}
