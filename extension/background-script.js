@@ -1335,11 +1335,15 @@ async function saveContent (message) {
     specialRule[2] &&
     (isFromGallery || tryOriginal)
   ) {
-    await getOriginalImageUrl({
+    try {
+      await getOriginalImageUrl({
       pageUrl: originalPictureHref,
       imageSelector: specialRule[2],
       reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.DOWNLOAD,
     });
+    } catch (e) {
+      console.error(e);
+    }
     return;
   }
 

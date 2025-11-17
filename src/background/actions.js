@@ -115,11 +115,15 @@ export async function saveContent (message) {
     specialRule[2] &&
     (isFromGallery || tryOriginal)
   ) {
-    await getOriginalImageUrl({
+    try {
+      await getOriginalImageUrl({
       pageUrl: originalPictureHref,
       imageSelector: specialRule[2],
       reason: EXTRACTION_REASON.DOWNLOAD,
     });
+    } catch (e) {
+      console.error(e);
+    }
     return;
   }
 
