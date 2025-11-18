@@ -53,7 +53,7 @@ body {
   transform: scale(1.05);
 }
 
-.downloadAll {
+.bigButton {
   display: inline-block;
   text-align: center;
   border: 3px solid black;
@@ -68,6 +68,27 @@ body {
   width: 200px;
   align-self: end;
   background-color: white;
+}
+
+.downloadAll {
+  display: none;
+}
+
+.downloadAll.show {
+  display: block;
+}
+
+.stopDownloading {
+  display: none;
+}
+
+.stopDownloading:hover {
+  border-color: #dc0000;
+  color: #dc0000;
+}
+
+.stopDownloading.show {
+  display: block;
 }
 
 button:hover {
@@ -140,4 +161,41 @@ button:active {
   left: 0;
   bottom: 0;
   right: 0;
+}
+
+.downloadProgress {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 3px;
+  display: none;
+}
+
+.downloadProgress.show {
+  display: flex;
+}
+
+.progressSpinner {
+  margin-top: 5px;
+  width: 20px;
+  padding: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgb(254, 119, 9);
+  --_m: 
+    conic-gradient(#0000 10%,#000),
+    linear-gradient(#000 0 0) content-box;
+  -webkit-mask: var(--_m);
+          mask: var(--_m);
+  -webkit-mask-composite: source-out;
+          mask-composite: subtract;
+  animation: spinner 1.5s infinite linear;
+  margin-right: 15px;
+}
+
+@keyframes spinner {
+  to{
+    transform: rotate(1turn)
+  }
 }

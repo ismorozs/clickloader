@@ -2,7 +2,7 @@ const browser = require('webextension-polyfill');
 
 import { EXTRACTION_REASON, MESSAGES } from '../shared/consts';
 import State from '../shared/state';
-import { runUserScript, saveContent, createImagesPage, sendImagesUrls, saveOriginalUrl, saveAllContent, getOriginalImageUrlForGallery, sendOriginalImageUrltoGallery } from './actions';
+import { runUserScript, saveContent, createImagesPage, sendImagesUrls, saveOriginalUrl, saveAllContent, getOriginalImageUrlForGallery, sendOriginalImageUrltoGallery, stopDownloading } from './actions';
 import { setupContextMenu, onContextMenuClicked } from './context-menu';
 
 function init () {
@@ -51,6 +51,10 @@ async function onMessage (message) {
 
     case MESSAGES.IMAGES_GALLERY_COMPLETED:
       sendImagesUrls();
+      break;
+
+    case MESSAGES.STOP_DOWNLOADING:
+      stopDownloading();
       break;
   }
 }

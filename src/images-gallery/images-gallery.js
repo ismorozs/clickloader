@@ -12,6 +12,10 @@ const IMAGES = document.querySelector(".images");
 const LAYOVER = document.querySelector(".layover");
 const BIG_IMAGE = document.querySelector(".bigImage");
 const POPUP_CONTAINER = document.querySelector(".popupContainer");
+const DOWNLOAD_PROGRESS = document.querySelector(".downloadProgress");
+const DOWNLOAD_LEFT = document.querySelector(".downloadLeft");
+const TOTAL_DOWNLOAD_COUNT = document.querySelector(".totalDownloadCount");
+const STOP_DOWNLOADING_BUTTON = document.querySelector(".stopDownloading");
 
 browser.runtime.sendMessage({
   type: MESSAGES.IMAGES_GALLERY_COMPLETED,
@@ -27,6 +31,9 @@ function onMessage(message) {
     case MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL:
       updateOriginalUrl(message);
       break;
+    case MESSAGES.RECEIVE_DOWNLOADING_PROGRESS:
+      updateTotalDownloadCount(message);
+      break;
   }
 }
 
@@ -35,6 +42,7 @@ setupEventHandler(LAYOVER, "click", switchLayover);
 setupEventHandler(BIG_IMAGE, "click", switchLayover);
 setupEventHandler(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
 setupEventHandler(DOWNLOAD_ALL, "click", downloadAllImages);
+setupEventHandler(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
 
 function buildPage (message) {
   window.__PAGE_DATA = message;
@@ -44,6 +52,7 @@ function buildPage (message) {
   PAGE_TITLE.textContent = title;
   PAGE_URL.textContent = url;
   IMAGES_COUNT.textContent = message.urls.length;
+  TOTAL_DOWNLOAD_COUNT.textContent = message.urls.length;
 
   urls.forEach(({ thumbUrl, originalUrl }) => {
     const card = createElement("div", "", ["card"]);
@@ -123,7 +132,10 @@ async function showOriginal(e) {
 }
 
 async function downloadAllImages () {
-  const { title, url, urls } = window.__PAGE_DATA;
+  const { title, url, urls, tabId } = window.__PAGE_DATA;
+
+  DOWNLOAD_LEFT.textContent = 0;
+  switchDownloadPanel();
 
   browser.runtime.sendMessage({
     type: MESSAGES.SAVE_ALL_CONTENT,
@@ -131,6 +143,7 @@ async function downloadAllImages () {
     href: url,
     isFromGallery: true,
     urls,
+    tabId,
   }); 
 }
 
@@ -155,4 +168,25 @@ function getOriginalUrl (thumbUrl) {
   const item = window.__PAGE_DATA.urls.find((url) => url.thumbUrl === thumbUrl);
 
   return item || {};
+}
+
+function updateTotalDownloadCount ({ count }) {
+  if (count) {
+    DOWNLOAD_LEFT.textContent = count;
+    return;
+  }
+
+  switchDownloadPanel();
+}
+
+function switchDownloadPanel () {
+  DOWNLOAD_ALL.classList.toggle("show");
+  STOP_DOWNLOADING_BUTTON.classList.toggle("show");
+  DOWNLOAD_PROGRESS.classList.toggle("show");
+}
+
+function stopDownloading () {
+  browser.runtime.sendMessage({
+    type: MESSAGES.STOP_DOWNLOADING
+  }); 
 }

@@ -11,7 +11,15 @@
   <body>
     <h1>All images for <span class="pageTitle"></span></h1>
     <p class="info">URL: <span class="pageUrl"></span><br>Found total: <span class="totalCount"></span> items.</p>
-    <div class="buttonContainer"><button class="downloadAll">Download All</button><span class="downloadWarning"></div> 
+    <div class="buttonContainer">
+      <button class="downloadAll bigButton show">Download All</button>
+      <button class="stopDownloading bigButton">Stop</button>
+      <span class="downloadWarning">
+      <div class="downloadProgress">
+        <div class="progressSpinner"></div>
+        <p><span class="downloadLeft">999</span> / <span class="totalDownloadCount">999</span></p>
+      </div>
+    </div> 
     <div class="images"></div>
     <div class="popupContainer">
       <img class="bigImage" />

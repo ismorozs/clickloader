@@ -150,13 +150,36 @@ export async function saveContent (message) {
 }
 
 export async function saveAllContent (message) {
+  State.isDownloadingInProgress(true);
   for (let i = 0; i < message.urls.length; i++) {
     const { thumbUrl, originalUrl, isPreloaded } = message.urls[i];
     const originalPictureHref = originalUrl !== "null" ? originalUrl : '';
     const url = isPreloaded ? originalUrl : thumbUrl;
 
-    await saveContent({ ...message, url: thumbUrl, originalPictureHref, type: MESSAGES.SAVE_CONTENT, isPreloaded });
+    if (State.isDownloadingInProgress()) {
+      await saveContent({
+        ...message,
+        url: thumbUrl,
+        originalPictureHref,
+        type: MESSAGES.SAVE_CONTENT,
+        isPreloaded,
+      });
+      await sendDownloadingProgress(message.tabId, i + 1);
+    }
   }
+  sendDownloadingProgress(message.tabId, 0);
+  State.isDownloadingInProgress(false);
+}
+
+export async function stopDownloading () {
+  State.isDownloadingInProgress(false);
+}
+
+async function sendDownloadingProgress (tabId, count) {
+  await browser.tabs.sendMessage(tabId, {
+    type: MESSAGES.RECEIVE_DOWNLOADING_PROGRESS,
+    count,
+  });
 }
 
 async function download (url, filename) {

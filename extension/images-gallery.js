@@ -1241,6 +1241,8 @@ const MESSAGES = {
   GET_IMAGE_URL_FOR_GALLERY: "GET_IMAGE_URL_FOR_GALLERY",
   RECEIVE_ORIGINAL_URL: "RECEIVE_ORIGINAL_URL",
   RECEIVE_ORIGINAL_IMAGE_URL: "RECEIVE_ORIGINAL_IMAGE_URL",
+  RECEIVE_DOWNLOADING_PROGRESS: "RECEIVE_DOWNLOADING_PROGRESS",
+  STOP_DOWNLOADING: "STOP_DOWNLOADING",
 };
 
 const EXTRACTION_REASON = {
@@ -1485,6 +1487,10 @@ const IMAGES = document.querySelector(".images");
 const LAYOVER = document.querySelector(".layover");
 const BIG_IMAGE = document.querySelector(".bigImage");
 const POPUP_CONTAINER = document.querySelector(".popupContainer");
+const DOWNLOAD_PROGRESS = document.querySelector(".downloadProgress");
+const DOWNLOAD_LEFT = document.querySelector(".downloadLeft");
+const TOTAL_DOWNLOAD_COUNT = document.querySelector(".totalDownloadCount");
+const STOP_DOWNLOADING_BUTTON = document.querySelector(".stopDownloading");
 
 browser.runtime.sendMessage({
   type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.IMAGES_GALLERY_COMPLETED,
@@ -1500,6 +1506,9 @@ function onMessage(message) {
     case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL:
       updateOriginalUrl(message);
       break;
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_DOWNLOADING_PROGRESS:
+      updateTotalDownloadCount(message);
+      break;
   }
 }
 
@@ -1508,6 +1517,7 @@ function onMessage(message) {
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(BIG_IMAGE, "click", switchLayover);
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(DOWNLOAD_ALL, "click", downloadAllImages);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
 
 function buildPage (message) {
   window.__PAGE_DATA = message;
@@ -1517,6 +1527,7 @@ function buildPage (message) {
   PAGE_TITLE.textContent = title;
   PAGE_URL.textContent = url;
   IMAGES_COUNT.textContent = message.urls.length;
+  TOTAL_DOWNLOAD_COUNT.textContent = message.urls.length;
 
   urls.forEach(({ thumbUrl, originalUrl }) => {
     const card = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", ["card"]);
@@ -1596,7 +1607,10 @@ async function showOriginal(e) {
 }
 
 async function downloadAllImages () {
-  const { title, url, urls } = window.__PAGE_DATA;
+  const { title, url, urls, tabId } = window.__PAGE_DATA;
+
+  DOWNLOAD_LEFT.textContent = 0;
+  switchDownloadPanel();
 
   browser.runtime.sendMessage({
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.SAVE_ALL_CONTENT,
@@ -1604,6 +1618,7 @@ async function downloadAllImages () {
     href: url,
     isFromGallery: true,
     urls,
+    tabId,
   }); 
 }
 
@@ -1630,6 +1645,26 @@ function getOriginalUrl (thumbUrl) {
   return item || {};
 }
 
+function updateTotalDownloadCount ({ count }) {
+  if (count) {
+    DOWNLOAD_LEFT.textContent = count;
+    return;
+  }
+
+  switchDownloadPanel();
+}
+
+function switchDownloadPanel () {
+  DOWNLOAD_ALL.classList.toggle("show");
+  STOP_DOWNLOADING_BUTTON.classList.toggle("show");
+  DOWNLOAD_PROGRESS.classList.toggle("show");
+}
+
+function stopDownloading () {
+  browser.runtime.sendMessage({
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.STOP_DOWNLOADING
+  }); 
+}
 })();
 
 /******/ })()

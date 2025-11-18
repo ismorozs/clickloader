@@ -34,6 +34,7 @@ const contextMenuKeys = [
   "isGalleryImagesSpecialRule",
   "thumbsCount",
   "isNoThumbCase",
+  "isDownloadingInProgress"
 ];
 
 const accessors = {};
