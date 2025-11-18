@@ -19,5 +19,8 @@
     "webextension-polyfill": "0.4.0",
     "webpack": "5.99.9",
     "webpack-cli": "4.10.0"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1"
   }
 }

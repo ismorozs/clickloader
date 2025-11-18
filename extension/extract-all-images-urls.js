@@ -1228,6 +1228,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   changeThumbUrlsToOriginalUrls: () => (/* binding */ changeThumbUrlsToOriginalUrls),
 /* harmony export */   createImagesPage: () => (/* binding */ createImagesPage),
 /* harmony export */   extractAllImageUrls: () => (/* binding */ extractAllImageUrls),
+/* harmony export */   getAllOriginalImageUrlsForGallery: () => (/* binding */ getAllOriginalImageUrlsForGallery),
 /* harmony export */   getOriginalImageUrlForGallery: () => (/* binding */ getOriginalImageUrlForGallery),
 /* harmony export */   getSpecialRule: () => (/* binding */ getSpecialRule),
 /* harmony export */   runUserScript: () => (/* binding */ runUserScript),
@@ -1297,12 +1298,30 @@ async function createImagesPage (message) {
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].thumbsCount(message.urls.length);
 
   if (!message.urls[0].thumbUrl) {
-    _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(true);
-    const specialRule = getSpecialRule(message.url, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
-    for (let i = 0; i < message.urls.length; i++) {
-      await getOriginalImageUrl({ pageUrl: message.urls[i].originalUrl, imageSelector: specialRule[2], reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.NO_THUMB });
-    }
+    handleNoThumbsCase(message);
   }
+}
+
+async function handleNoThumbsCase (message) {
+  const specialRule = getSpecialRule(message.url, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
+
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(true);
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(true);
+
+  for (let i = 0; i < message.urls.length; i++) {
+    if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress()) {
+      _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
+      _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(false);
+      return;
+    }
+
+    await getOriginalImageUrl({
+      pageUrl: message.urls[i].originalUrl,
+      imageSelector: specialRule[2],
+      reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.NO_THUMB,
+    });
+  }
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(false);
 }
 
 async function changeThumbUrlsToOriginalUrls () {
@@ -1327,7 +1346,14 @@ async function sendImagesUrls () {
     _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
   }
 
-  browser.tabs.sendMessage(tab.id, { ...urls, tabId: tab.id, isSpecialRule, type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_IMAGES_URLS });
+  browser.tabs.sendMessage(tab.id, {
+    ...urls,
+    tabId: tab.id,
+    isSpecialRule,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_IMAGES_URLS,
+    isNoThumbs: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(),
+    specialRule: getSpecialRule(urls.url, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules())
+  });
 }
 
 async function saveOriginalUrl (message) {
@@ -1336,10 +1362,34 @@ async function saveOriginalUrl (message) {
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls(savedOriginalUrls);
 
   if (_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].thumbsCount() === savedOriginalUrls.length) {
-    changeThumbUrlsToOriginalUrls();
-    _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(false);
-    sendImagesUrls();
+    if (_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase()) {
+      updateUrlsAndResendImagesToGallery();
+      return;
+    }
+
+    sendPreloadedUrlsToGallery();
   }
+}
+
+async function updateUrlsAndResendImagesToGallery () {
+  changeThumbUrlsToOriginalUrls();
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(false);
+  sendImagesUrls();
+}
+
+async function sendPreloadedUrlsToGallery() {
+  const originalUrls = {};
+
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls().forEach(
+    ({ href, url }) => (originalUrls[href] = url)
+  );
+
+  browser.tabs.sendMessage(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesTab().id, {
+    originalUrls,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS,
+  });
+
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
 }
 
 async function saveContent (message) {
@@ -1458,6 +1508,33 @@ function getSpecialRule (url, specialRules) {
   return [];
 }
 
+async function getAllOriginalImageUrlsForGallery (message) {
+  const specialRule = getSpecialRule(message.href, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(true);
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
+  
+  for (let i = 0; i < message.urls.length; i++) {
+    const { thumbUrl, originalUrl, isPreloaded } = message.urls[i];
+
+    if(!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress()) {
+      sendDownloadingProgress(message.tabId, 0);
+      _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
+      return;
+    }
+
+    if (isPreloaded || !(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isValidUrl)(originalUrl)) {
+      saveOriginalUrl({ href: originalUrl, url: originalUrl || thumbUrl });
+      continue;
+    }
+
+    await getOriginalImageUrl({
+      pageUrl: originalUrl,
+      imageSelector: specialRule[2],
+      reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.NO_THUMB,
+    });
+  }
+}
+
 
 /***/ }),
 
@@ -1488,6 +1565,8 @@ const MESSAGES = {
   RECEIVE_ORIGINAL_IMAGE_URL: "RECEIVE_ORIGINAL_IMAGE_URL",
   RECEIVE_DOWNLOADING_PROGRESS: "RECEIVE_DOWNLOADING_PROGRESS",
   STOP_DOWNLOADING: "STOP_DOWNLOADING",
+  GET_ALL_IMAGES_URLS_FOR_GALLERY: "GET_ALL_IMAGES_URLS_FOR_GALLERY",
+  RECEIVE_PRELOADED_IMAGES_URLS: "RECEIVE_PRELOADED_IMAGES_URLS",
 };
 
 const EXTRACTION_REASON = {
@@ -1526,6 +1605,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
+/* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
 /* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
 /* harmony export */ });
@@ -1533,7 +1613,7 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 const MAX_NODE_TREE_ASCENTION = 3;
 
-function removeForbiddenCharacters (str, isFileName) {
+function removeForbiddenCharacters (str) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
     '\\/' , '\\.',
@@ -1573,6 +1653,10 @@ async function executeScript (tabId, file) {
   } catch (e) {
     return await browser.tabs.executeScript(tabId, { file });
   }
+}
+
+function isValidUrl (url) {
+  return url && url !== null && url.length && url !== "null";
 }
 
 
@@ -1625,7 +1709,8 @@ const contextMenuKeys = [
   "isGalleryImagesSpecialRule",
   "thumbsCount",
   "isNoThumbCase",
-  "isDownloadingInProgress"
+  "isDownloadingInProgress",
+  "isPreloadingForGallery",
 ];
 
 const accessors = {};

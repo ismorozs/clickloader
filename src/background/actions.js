@@ -2,7 +2,7 @@ const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
 import { MESSAGES, MAX_FILE_NAME, SCRIPTS, IMAGES_GALLERY_URL, EXTRACTION_REASON, ERRORS } from '../shared/consts';
-import { executeScript, extractExtension, getCurrentTab, isHTTPUrl, removeForbiddenCharacters } from '../shared/helpers';
+import { executeScript, extractExtension, getCurrentTab, isHTTPUrl, isValidUrl, removeForbiddenCharacters } from '../shared/helpers';
 
 export async function runUserScript (newActiveState, newSaveMethod, tab) {
   if (!tab) {
@@ -54,12 +54,30 @@ export async function createImagesPage (message) {
   State.thumbsCount(message.urls.length);
 
   if (!message.urls[0].thumbUrl) {
-    State.isNoThumbCase(true);
-    const specialRule = getSpecialRule(message.url, State.specialRules());
-    for (let i = 0; i < message.urls.length; i++) {
-      await getOriginalImageUrl({ pageUrl: message.urls[i].originalUrl, imageSelector: specialRule[2], reason: EXTRACTION_REASON.NO_THUMB });
-    }
+    handleNoThumbsCase(message);
   }
+}
+
+async function handleNoThumbsCase (message) {
+  const specialRule = getSpecialRule(message.url, State.specialRules());
+
+  State.isNoThumbCase(true);
+  State.isDownloadingInProgress(true);
+
+  for (let i = 0; i < message.urls.length; i++) {
+    if (!State.isDownloadingInProgress()) {
+      State.savedOriginalUrls([]);
+      State.isNoThumbCase(false);
+      return;
+    }
+
+    await getOriginalImageUrl({
+      pageUrl: message.urls[i].originalUrl,
+      imageSelector: specialRule[2],
+      reason: EXTRACTION_REASON.NO_THUMB,
+    });
+  }
+  State.isDownloadingInProgress(false);
 }
 
 export async function changeThumbUrlsToOriginalUrls () {
@@ -84,7 +102,14 @@ export async function sendImagesUrls () {
     State.savedOriginalUrls([]);
   }
 
-  browser.tabs.sendMessage(tab.id, { ...urls, tabId: tab.id, isSpecialRule, type: MESSAGES.RECEIVE_IMAGES_URLS });
+  browser.tabs.sendMessage(tab.id, {
+    ...urls,
+    tabId: tab.id,
+    isSpecialRule,
+    type: MESSAGES.RECEIVE_IMAGES_URLS,
+    isNoThumbs: State.isNoThumbCase(),
+    specialRule: getSpecialRule(urls.url, State.specialRules())
+  });
 }
 
 export async function saveOriginalUrl (message) {
@@ -93,10 +118,34 @@ export async function saveOriginalUrl (message) {
   State.savedOriginalUrls(savedOriginalUrls);
 
   if (State.thumbsCount() === savedOriginalUrls.length) {
-    changeThumbUrlsToOriginalUrls();
-    State.isNoThumbCase(false);
-    sendImagesUrls();
+    if (State.isNoThumbCase()) {
+      updateUrlsAndResendImagesToGallery();
+      return;
+    }
+
+    sendPreloadedUrlsToGallery();
   }
+}
+
+async function updateUrlsAndResendImagesToGallery () {
+  changeThumbUrlsToOriginalUrls();
+  State.isNoThumbCase(false);
+  sendImagesUrls();
+}
+
+async function sendPreloadedUrlsToGallery() {
+  const originalUrls = {};
+
+  State.savedOriginalUrls().forEach(
+    ({ href, url }) => (originalUrls[href] = url)
+  );
+
+  browser.tabs.sendMessage(State.galleryImagesTab().id, {
+    originalUrls,
+    type: MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS,
+  });
+
+  State.savedOriginalUrls([]);
 }
 
 export async function saveContent (message) {
@@ -213,4 +262,31 @@ export function getSpecialRule (url, specialRules) {
   }
 
   return [];
+}
+
+export async function getAllOriginalImageUrlsForGallery (message) {
+  const specialRule = getSpecialRule(message.href, State.specialRules());
+  State.isDownloadingInProgress(true);
+  State.savedOriginalUrls([]);
+  
+  for (let i = 0; i < message.urls.length; i++) {
+    const { thumbUrl, originalUrl, isPreloaded } = message.urls[i];
+
+    if(!State.isDownloadingInProgress()) {
+      sendDownloadingProgress(message.tabId, 0);
+      State.savedOriginalUrls([]);
+      return;
+    }
+
+    if (isPreloaded || !isValidUrl(originalUrl)) {
+      saveOriginalUrl({ href: originalUrl, url: originalUrl || thumbUrl });
+      continue;
+    }
+
+    await getOriginalImageUrl({
+      pageUrl: originalUrl,
+      imageSelector: specialRule[2],
+      reason: EXTRACTION_REASON.NO_THUMB,
+    });
+  }
 }

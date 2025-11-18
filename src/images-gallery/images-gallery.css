@@ -49,33 +49,84 @@ body {
   opacity: 0.9;
 }
 
-.download:active {
+button:active {
   transform: scale(1.05);
 }
 
 .bigButton {
   display: inline-block;
   text-align: center;
-  border: 3px solid black;
   background: none;
-  font-size: 18px;
-  padding: 3px 10px;
+  font-size: 20px;
   min-width: 68px;
   box-sizing: border-box;
-  padding: 7px 18px;
+  padding: 10px 18px;
   vertical-align: bottom;
-  margin-bottom: 4px;
-  width: 200px;
+  width: 250px;
   align-self: end;
   background-color: white;
 }
 
-.downloadAll {
+.downloadAllButtons {
+  border: 3px solid black;
+  cursor: pointer;
   display: none;
 }
 
-.downloadAll.show {
+.downloadAllButtons.show {
   display: block;
+}
+
+.downloadButtons {
+  display: none;
+  margin-top: -3px;
+}
+
+.downloadAllButtons:hover .downloadButtons {
+  display: block;
+}
+
+.downloadAllButtons:hover {
+  border-color: #0040ff;
+  color: #0040ff;
+  cursor: pointer;
+}
+
+.downloadButton {
+  display: inline-block;
+  text-align: center;
+  border: none;
+  background: none;
+  font-size: 16px;
+  padding: 5px 10px;
+  box-sizing: border-box;
+  padding: 8px 18px;
+  border-color: #0040ff;
+  border-style: solid;
+  border-width: 0px;
+  border-top-width: 3px;
+}
+
+.downloadButton:hover {
+  color: #0040ff;
+  border-top: none;
+}
+
+.downloadAll {
+  width: 100px;
+  border-right-width: 3px;
+}
+
+.downloadAllAsArchive {
+  width: 150px;
+}
+
+.downloadAll:hover {
+  border-right: none;
+}
+
+.downloadAll:hover + button {
+  border-left-width: 3px;
 }
 
 .stopDownloading {
@@ -198,4 +249,25 @@ button:active {
   to{
     transform: rotate(1turn)
   }
+}
+
+.totalDownloadCount {
+  display: none;
+}
+
+.totalDownloadCount.show {
+  display: inline;
+}
+
+.noThumbWarning {
+  display: none;
+  align-items: center;
+}
+
+.noThumbWarning p {
+  margin-right: 15px;
+}
+
+.noThumbWarning.show {
+  display: flex;
 }

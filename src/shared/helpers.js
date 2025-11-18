@@ -2,7 +2,7 @@ const browser = require('webextension-polyfill');
 
 const MAX_NODE_TREE_ASCENTION = 3;
 
-export function removeForbiddenCharacters (str, isFileName) {
+export function removeForbiddenCharacters (str) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
     '\\/' , '\\.',
@@ -42,4 +42,8 @@ export async function executeScript (tabId, file) {
   } catch (e) {
     return await browser.tabs.executeScript(tabId, { file });
   }
+}
+
+export function isValidUrl (url) {
+  return url && url !== null && url.length && url !== "null";
 }

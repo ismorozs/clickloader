@@ -12,14 +12,27 @@
     <h1>All images for <span class="pageTitle"></span></h1>
     <p class="info">URL: <span class="pageUrl"></span><br>Found total: <span class="totalCount"></span> items.</p>
     <div class="buttonContainer">
-      <button class="downloadAll bigButton show">Download All</button>
+
+      <div class="downloadAllButtons show">
+        <div class="bigButton">Download All</div>
+        <div class="downloadButtons">
+          <button class="downloadAll downloadButton">Raw</button><button class="downloadAllAsArchive downloadButton">As archive</button>
+        </div>
+      </div>
+
       <button class="stopDownloading bigButton">Stop</button>
       <span class="downloadWarning">
       <div class="downloadProgress">
         <div class="progressSpinner"></div>
-        <p><span class="downloadLeft">999</span> / <span class="totalDownloadCount">999</span></p>
+        <p><span class="downloadLeft"></span><span class="totalDownloadCount"></span></p>
       </div>
-    </div> 
+    </div>
+
+    <div class="noThumbWarning">
+      <p>Unfortunately, the extension could not find the thumbnail images. Links to the original pictures are being gathered to be used for the thumbnail images instead.</p>
+      <div class="progressSpinner"></div>
+    </div>
+    
     <div class="images"></div>
     <div class="popupContainer">
       <img class="bigImage" />

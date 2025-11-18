@@ -1415,6 +1415,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
+/* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
 /* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
 /* harmony export */ });
@@ -1422,7 +1423,7 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 const MAX_NODE_TREE_ASCENTION = 3;
 
-function removeForbiddenCharacters (str, isFileName) {
+function removeForbiddenCharacters (str) {
   const regexpStr = [
     '[\\\\\?%*:|"<>',
     '\\/' , '\\.',
@@ -1462,6 +1463,10 @@ async function executeScript (tabId, file) {
   } catch (e) {
     return await browser.tabs.executeScript(tabId, { file });
   }
+}
+
+function isValidUrl (url) {
+  return url && url !== null && url.length && url !== "null";
 }
 
 
@@ -1587,7 +1592,8 @@ const contextMenuKeys = [
   "isGalleryImagesSpecialRule",
   "thumbsCount",
   "isNoThumbCase",
-  "isDownloadingInProgress"
+  "isDownloadingInProgress",
+  "isPreloadingForGallery",
 ];
 
 const accessors = {};
