@@ -1302,6 +1302,7 @@ const ERRORS = {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createSafeFolderName: () => (/* binding */ createSafeFolderName),
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
@@ -1358,6 +1359,14 @@ async function executeScript (tabId, file) {
 
 function isValidUrl (url) {
   return url && url !== null && url.length && url !== "null";
+}
+
+function createSafeFolderName (string) {
+  let folderName = removeForbiddenCharacters(string)
+    .replace(/\/+/g, "/")
+    .replace(/^\/|\/$/g, "");
+
+  return folderName;
 }
 
 

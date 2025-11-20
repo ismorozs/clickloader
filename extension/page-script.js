@@ -1420,9 +1420,8 @@ async function saveContent (message) {
     return;
   }
 
-  const saveFolder =
-    (specialRule[4] && `${specialRule[4]}/`) || _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder();
 
+  const saveFolder = `${_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder()}/${specialRule[4]}/`.replace(/\/+/g, "/");
   const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(url || originalPictureHref);
   const rawName = specialRule[3] === "URL" ? href : title;
   const handledName = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.removeForbiddenCharacters)(rawName, true).substring(0, _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MAX_FILE_NAME);
@@ -1703,6 +1702,7 @@ const ERRORS = {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createSafeFolderName: () => (/* binding */ createSafeFolderName),
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
@@ -1759,6 +1759,14 @@ async function executeScript (tabId, file) {
 
 function isValidUrl (url) {
   return url && url !== null && url.length && url !== "null";
+}
+
+function createSafeFolderName (string) {
+  let folderName = removeForbiddenCharacters(string)
+    .replace(/\/+/g, "/")
+    .replace(/^\/|\/$/g, "");
+
+  return folderName;
 }
 
 

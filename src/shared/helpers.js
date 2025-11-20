@@ -47,3 +47,11 @@ export async function executeScript (tabId, file) {
 export function isValidUrl (url) {
   return url && url !== null && url.length && url !== "null";
 }
+
+export function createSafeFolderName (string) {
+  let folderName = removeForbiddenCharacters(string)
+    .replace(/\/+/g, "/")
+    .replace(/^\/|\/$/g, "");
+
+  return folderName;
+}

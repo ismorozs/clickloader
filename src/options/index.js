@@ -1,8 +1,8 @@
 const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
-import { removeForbiddenCharacters } from '../shared/helpers';
-import { createElement, createSelect, emptyNode, setupEventHandler } from '../shared/markup';
+import { createSafeFolderName, removeForbiddenCharacters } from '../shared/helpers';
+import { createElement, createSelect, emptyNode, hasClass, setupEventHandler } from '../shared/markup';
 
 const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
 const FOLDERS_LIST = document.querySelector('.saveFoldersList');
@@ -88,12 +88,7 @@ async function setupFoldersList(saveFolders) {
 }
 
 function saveNewFolder () {
-  let newFolder = NEW_FOLDER_INPUT.value;
-  newFolder = removeForbiddenCharacters(newFolder).replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
-
-  if (newFolder.length) {
-    newFolder += '/';
-  }
+  const newFolder = createSafeFolderName(NEW_FOLDER_INPUT.value);
 
   const saveFolders = State.saveFolders();
 
@@ -160,6 +155,11 @@ function saveSpecialRules () {
       const input = ruleCell.querySelector("[value]");
 
       if (!input) {
+        return;
+      }
+
+      if (hasClass(input, "folder")) {
+        newRules.push(createSafeFolderName(input.value));
         return;
       }
 

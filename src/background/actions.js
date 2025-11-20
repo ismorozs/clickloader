@@ -176,9 +176,8 @@ export async function saveContent (message) {
     return;
   }
 
-  const saveFolder =
-    (specialRule[4] && `${specialRule[4]}/`) || State.saveFolder();
 
+  const saveFolder = `${State.saveFolder()}/${specialRule[4]}/`.replace(/\/+/g, "/");
   const extension = extractExtension(url || originalPictureHref);
   const rawName = specialRule[3] === "URL" ? href : title;
   const handledName = removeForbiddenCharacters(rawName, true).substring(0, MAX_FILE_NAME);

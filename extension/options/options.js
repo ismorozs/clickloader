@@ -1298,12 +1298,7 @@ async function setupFoldersList(saveFolders) {
 }
 
 function saveNewFolder () {
-  let newFolder = NEW_FOLDER_INPUT.value;
-  newFolder = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_1__.removeForbiddenCharacters)(newFolder).replace(/\/+/g, '/').replace(/^\/|\/$/g, '');
-
-  if (newFolder.length) {
-    newFolder += '/';
-  }
+  const newFolder = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_1__.createSafeFolderName)(NEW_FOLDER_INPUT.value);
 
   const saveFolders = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders();
 
@@ -1373,6 +1368,11 @@ function saveSpecialRules () {
         return;
       }
 
+      if ((0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.hasClass)(input, "folder")) {
+        newRules.push((0,_shared_helpers__WEBPACK_IMPORTED_MODULE_1__.createSafeFolderName)(input.value));
+        return;
+      }
+
       newRules.push(input.value);
     });
 
@@ -1411,6 +1411,7 @@ function onStorageChange (changes) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   createSafeFolderName: () => (/* binding */ createSafeFolderName),
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
@@ -1467,6 +1468,14 @@ async function executeScript (tabId, file) {
 
 function isValidUrl (url) {
   return url && url !== null && url.length && url !== "null";
+}
+
+function createSafeFolderName (string) {
+  let folderName = removeForbiddenCharacters(string)
+    .replace(/\/+/g, "/")
+    .replace(/^\/|\/$/g, "");
+
+  return folderName;
 }
 
 
