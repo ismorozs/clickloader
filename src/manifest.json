@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Save on Click",
-  "version": "1.1.11",
+  "version": "1.1.14",
 
   "description": "Simple extension for downloading pictures and other media content by just clicking on them",
   "homepage_url": "https://github.com/ismorozs/clickloader",

@@ -55,3 +55,7 @@ export function createSafeFolderName (string) {
 
   return folderName;
 }
+
+export function isMediaResource (url, domainName) {
+  return domainName.length && url.slice(domainName.length).split(".")[1] || url.split(".").length > 3;
+}

@@ -3,7 +3,7 @@ const JSZip = require("jszip");
 
 import { EXTRACTION_REASON, MESSAGES, MAX_FILE_NAME } from "../shared/consts";
 import { createElement, emptyNode, hasClass, setupEventHandler } from "../shared/markup";
-import { extractExtension, isVideo, removeForbiddenCharacters } from "../shared/helpers";
+import { extractExtension, isMediaResource, isVideo, removeForbiddenCharacters } from "../shared/helpers";
 
 const PAGE_TITLE = document.querySelector(".pageTitle");
 const PAGE_URL = document.querySelector(".pageUrl");
@@ -20,6 +20,10 @@ const DOWNLOAD_LEFT = document.querySelector(".downloadLeft");
 const TOTAL_DOWNLOAD_COUNT = document.querySelector(".totalDownloadCount");
 const STOP_DOWNLOADING_BUTTON = document.querySelector(".stopDownloading");
 const NO_THUMB_WARNING = document.querySelector('.noThumbWarning');
+const NO_IMAGE_WARNING = document.querySelector('.noImageWarning');
+const ORIGINAL_IMAGE_URL = document.querySelector('.originalImageUrl');
+const DOWNLOAD_THUMBNAIL_BUTTON = document.querySelector('.loadThumbnail');
+const SMALL_THUMBNAIL = document.querySelector('.smallThumbnail');
 
 browser.runtime.sendMessage({
   type: MESSAGES.IMAGES_GALLERY_COMPLETED,
@@ -51,6 +55,7 @@ setupEventHandler(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
 setupEventHandler(DOWNLOAD_ALL, "click", downloadAllImages);
 setupEventHandler(DOWNLOAD_ALL_AS_ARCHIVE, "click", downloadAllAsArchive);
 setupEventHandler(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
+setupEventHandler(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
 setupEventHandler(window, 'beforeunload', stopDownloading);
 
 function buildPage (message) {
@@ -106,8 +111,15 @@ function handleImage (e) {
 }
 
 async function downloadImage (e) {
+  const { specialRule } = window.__PAGE_DATA;
   const { href, url, title, originalPictureHref } = e.target.dataset;
-  const { isPreloaded, originalUrl } = getOriginalUrl(url);
+  const { isPreloaded, originalUrl, thumbUrl } = getOriginalUrl(url);
+  
+  if (!isMediaResource(originalUrl, specialRule[0]) && isPreloaded) {
+    switchLayover();
+    onShowingOriginalError(originalUrl, thumbUrl);
+    return;
+  }
 
   browser.runtime.sendMessage({
     type: MESSAGES.RECEIVE_ORIGINAL_URL,
@@ -115,7 +127,7 @@ async function downloadImage (e) {
     originalPictureHref,
     href,
     isFromGallery: true,
-    url: isPreloaded ? originalUrl : url,
+    url: isPreloaded && originalUrl !== null ? originalUrl : url,
     isPreloaded,
     reason: EXTRACTION_REASON.DOWNLOAD,
   });
@@ -126,10 +138,10 @@ async function showOriginal(e) {
 
   const { title, url } = window.__PAGE_DATA;
   const { originalPictureHref } = e.target.dataset;
-  const { isPreloaded, originalUrl } = getOriginalUrl(e.target.src);
+  const { isPreloaded, originalUrl, thumbUrl } = getOriginalUrl(e.target.src);
 
   if (isPreloaded) {
-    updateBigPicture(originalUrl);
+    updateBigPicture(originalUrl, thumbUrl);
     return;
   }
 
@@ -166,18 +178,20 @@ function switchLayover () {
   LAYOVER.classList.toggle("show");
   BIG_IMAGE.classList.remove("show");
   POPUP_CONTAINER.classList.toggle("show");
+  NO_IMAGE_WARNING.classList.remove("show");
 }
 
 function updateOriginalUrl (message) {
   const item = window.__PAGE_DATA.urls.find((el) => el.originalUrl === message.href);
   item.originalUrl = message.originalUrl;
   item.isPreloaded = true;
-  updateBigPicture(message.originalUrl);
+  updateBigPicture(message.originalUrl, item.thumbUrl);
 }
 
-function updateBigPicture (src) {
+function updateBigPicture (src, thumbUrl) {
+  const { specialRule } = window.__PAGE_DATA;
   BIG_IMAGE.style.maxHeight = `${window.innerHeight}px`;
-  BIG_IMAGE.src = src;
+  BIG_IMAGE.src = src && isMediaResource(src, specialRule[0]) ? src : thumbUrl;
 }
 function getOriginalUrl (thumbUrl) {
   const item = window.__PAGE_DATA.urls.find((url) => url.thumbUrl === thumbUrl);
@@ -268,4 +282,29 @@ async function updateOriginalUrls (message) {
   link.click();
 
   updateTotalDownloadCount({ count: 0 });
+}
+
+function onShowingOriginalError (url, thumbUrl) {
+  ORIGINAL_IMAGE_URL.textContent = url;
+  ORIGINAL_IMAGE_URL.href = url;
+  SMALL_THUMBNAIL.src = thumbUrl;
+  DOWNLOAD_THUMBNAIL_BUTTON.dataset.thumbUrl = thumbUrl;
+  NO_IMAGE_WARNING.classList.add("show");
+}
+
+function downloadThumbnail (e) {
+  e.stopPropagation();
+  const { title, url: href } = window.__PAGE_DATA;
+  const url = e.target.dataset.thumbUrl;
+
+  browser.runtime.sendMessage({
+    type: MESSAGES.RECEIVE_ORIGINAL_URL,
+    title,
+    originalPictureHref: url,
+    href,
+    isFromGallery: true,
+    url,
+    isPreloaded: false,
+    reason: EXTRACTION_REASON.DOWNLOAD,
+  });
 }

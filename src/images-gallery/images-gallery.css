@@ -271,3 +271,54 @@ button:active {
 .noThumbWarning.show {
   display: flex;
 }
+
+.noImageWarning {
+  display: none;
+  margin: auto;
+  z-index: 3;
+  opacity: 1;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  color: white;
+  background: black;
+  padding: 20px 30px;
+  border-radius: 20px;
+}
+
+.noImageWarning p:first-child {
+  line-height: 1.2;
+  margin-bottom: 0;
+}
+
+.noImageWarning p:nth-child(3) {
+  margin-top: 0;
+  margin-bottom: 30px;
+}
+
+.noImageWarning.show {
+  display: inline-flex;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.originalImageUrl {
+  font-size: 20px;
+  padding-left: 3px;
+  color: #1E90FF;
+}
+
+.smallThumbnail {
+  max-height: 300px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.smallThumbnailContainer {
+  text-align: center;
+  position: relative;
+  display: inline-block;
+  align-self: center;
+}

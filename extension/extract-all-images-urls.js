@@ -1605,6 +1605,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
+/* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
 /* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
@@ -1665,6 +1666,10 @@ function createSafeFolderName (string) {
     .replace(/^\/|\/$/g, "");
 
   return folderName;
+}
+
+function isMediaResource (url, domainName) {
+  return domainName.length && url.slice(domainName.length).split(".")[1] || url.split(".").length > 3;
 }
 
 
