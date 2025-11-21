@@ -1268,6 +1268,7 @@ const MESSAGES = {
   STOP_DOWNLOADING: "STOP_DOWNLOADING",
   GET_ALL_IMAGES_URLS_FOR_GALLERY: "GET_ALL_IMAGES_URLS_FOR_GALLERY",
   RECEIVE_PRELOADED_IMAGES_URLS: "RECEIVE_PRELOADED_IMAGES_URLS",
+  OPEN_SETTINGS: "OPEN_SETTINGS",
 };
 
 const EXTRACTION_REASON = {
@@ -1555,6 +1556,7 @@ const NO_IMAGE_WARNING = document.querySelector('.noImageWarning');
 const ORIGINAL_IMAGE_URL = document.querySelector('.originalImageUrl');
 const DOWNLOAD_THUMBNAIL_BUTTON = document.querySelector('.loadThumbnail');
 const SMALL_THUMBNAIL = document.querySelector('.smallThumbnail');
+const OPEN_SETTINGS_BUTTON = document.querySelector('.openSettings');
 
 browser.runtime.sendMessage({
   type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.IMAGES_GALLERY_COMPLETED,
@@ -1587,6 +1589,7 @@ function onMessage(message) {
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(DOWNLOAD_ALL_AS_ARCHIVE, "click", downloadAllAsArchive);
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(OPEN_SETTINGS_BUTTON, "click", openSettings);
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(window, 'beforeunload', stopDownloading);
 
 function buildPage (message) {
@@ -1838,6 +1841,10 @@ function downloadThumbnail (e) {
     isPreloaded: false,
     reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.DOWNLOAD,
   });
+}
+
+function openSettings () {
+  browser.runtime.sendMessage({ type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.OPEN_SETTINGS });
 }
 
 })();

@@ -322,3 +322,8 @@ button:active {
   display: inline-block;
   align-self: center;
 }
+
+.openSettings {
+  cursor: pointer;
+  color: #1E90FF;
+}

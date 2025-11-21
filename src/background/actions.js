@@ -4,6 +4,8 @@ import State from '../shared/state';
 import { MESSAGES, MAX_FILE_NAME, SCRIPTS, IMAGES_GALLERY_URL, EXTRACTION_REASON, ERRORS } from '../shared/consts';
 import { executeScript, extractExtension, getCurrentTab, isHTTPUrl, isValidUrl, removeForbiddenCharacters } from '../shared/helpers';
 
+const SETTINGS_PAGE_URL = "/options/options.html";
+
 export async function runUserScript (newActiveState, newSaveMethod, tab) {
   if (!tab) {
     tab = await getCurrentTab();
@@ -288,4 +290,8 @@ export async function getAllOriginalImageUrlsForGallery (message) {
       reason: EXTRACTION_REASON.NO_THUMB,
     });
   }
+}
+
+export function openSettings() {
+  browser.tabs.create({ active: true, url: SETTINGS_PAGE_URL });
 }

@@ -1,9 +1,7 @@
 const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
-import { extractAllImageUrls, runUserScript } from './actions';
-
-const SETTINGS_PAGE_URL = '/options/options.html';
+import { extractAllImageUrls, runUserScript, openSettings } from './actions';
 
 const EVENT_MEANINGS = {
   contextmenu: 'Right-click',
@@ -163,10 +161,6 @@ function changeSaveMethod (methodIdx) {
   const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
   browser.storage.local.set({ saveMethod });
   runUserScript(State.active(), saveMethod);
-}
-
-function openSettings () {
-  browser.tabs.create({ active: true, url: SETTINGS_PAGE_URL });
 }
 
 async function openPagePictures () {

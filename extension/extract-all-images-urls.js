@@ -1231,6 +1231,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   getAllOriginalImageUrlsForGallery: () => (/* binding */ getAllOriginalImageUrlsForGallery),
 /* harmony export */   getOriginalImageUrlForGallery: () => (/* binding */ getOriginalImageUrlForGallery),
 /* harmony export */   getSpecialRule: () => (/* binding */ getSpecialRule),
+/* harmony export */   openSettings: () => (/* binding */ openSettings),
 /* harmony export */   runUserScript: () => (/* binding */ runUserScript),
 /* harmony export */   saveAllContent: () => (/* binding */ saveAllContent),
 /* harmony export */   saveContent: () => (/* binding */ saveContent),
@@ -1247,6 +1248,8 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 
 
+
+const SETTINGS_PAGE_URL = "/options/options.html";
 
 async function runUserScript (newActiveState, newSaveMethod, tab) {
   if (!tab) {
@@ -1534,6 +1537,10 @@ async function getAllOriginalImageUrlsForGallery (message) {
   }
 }
 
+function openSettings() {
+  browser.tabs.create({ active: true, url: SETTINGS_PAGE_URL });
+}
+
 
 /***/ }),
 
@@ -1566,6 +1573,7 @@ const MESSAGES = {
   STOP_DOWNLOADING: "STOP_DOWNLOADING",
   GET_ALL_IMAGES_URLS_FOR_GALLERY: "GET_ALL_IMAGES_URLS_FOR_GALLERY",
   RECEIVE_PRELOADED_IMAGES_URLS: "RECEIVE_PRELOADED_IMAGES_URLS",
+  OPEN_SETTINGS: "OPEN_SETTINGS",
 };
 
 const EXTRACTION_REASON = {

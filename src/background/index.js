@@ -13,6 +13,7 @@ import {
   sendOriginalImageUrltoGallery,
   stopDownloading,
   getAllOriginalImageUrlsForGallery,
+  openSettings,
 } from "./actions";
 import { setupContextMenu, onContextMenuClicked } from './context-menu';
 
@@ -70,6 +71,10 @@ async function onMessage (message) {
 
     case MESSAGES.STOP_DOWNLOADING:
       stopDownloading();
+      break;
+
+    case MESSAGES.OPEN_SETTINGS:
+      openSettings();
       break;
   }
 }

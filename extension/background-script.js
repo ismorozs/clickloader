@@ -1209,6 +1209,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   getAllOriginalImageUrlsForGallery: () => (/* binding */ getAllOriginalImageUrlsForGallery),
 /* harmony export */   getOriginalImageUrlForGallery: () => (/* binding */ getOriginalImageUrlForGallery),
 /* harmony export */   getSpecialRule: () => (/* binding */ getSpecialRule),
+/* harmony export */   openSettings: () => (/* binding */ openSettings),
 /* harmony export */   runUserScript: () => (/* binding */ runUserScript),
 /* harmony export */   saveAllContent: () => (/* binding */ saveAllContent),
 /* harmony export */   saveContent: () => (/* binding */ saveContent),
@@ -1225,6 +1226,8 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 
 
+
+const SETTINGS_PAGE_URL = "/options/options.html";
 
 async function runUserScript (newActiveState, newSaveMethod, tab) {
   if (!tab) {
@@ -1512,6 +1515,10 @@ async function getAllOriginalImageUrlsForGallery (message) {
   }
 }
 
+function openSettings() {
+  browser.tabs.create({ active: true, url: SETTINGS_PAGE_URL });
+}
+
 
 /***/ }),
 
@@ -1533,8 +1540,6 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 
 
-
-const SETTINGS_PAGE_URL = '/options/options.html';
 
 const EVENT_MEANINGS = {
   contextmenu: 'Right-click',
@@ -1659,11 +1664,11 @@ function onContextMenuClicked (info) {
       return;
 
     case CONTEXT_MENU.MANAGE_FOLDERS.ID:
-      openSettings();
+      (0,_actions__WEBPACK_IMPORTED_MODULE_1__.openSettings)();
       return;
 
     case CONTEXT_MENU.CUSTOMIZE.ID:
-      openSettings();
+      (0,_actions__WEBPACK_IMPORTED_MODULE_1__.openSettings)();
       return;
 
     case CONTEXT_MENU.TRY_DOWNLOAD_ORIGINAL.ID:
@@ -1694,10 +1699,6 @@ function changeSaveMethod (methodIdx) {
   const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
   browser.storage.local.set({ saveMethod });
   (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), saveMethod);
-}
-
-function openSettings () {
-  browser.tabs.create({ active: true, url: SETTINGS_PAGE_URL });
 }
 
 async function openPagePictures () {
@@ -1788,6 +1789,10 @@ async function onMessage (message) {
     case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.STOP_DOWNLOADING:
       (0,_actions__WEBPACK_IMPORTED_MODULE_2__.stopDownloading)();
       break;
+
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.OPEN_SETTINGS:
+      (0,_actions__WEBPACK_IMPORTED_MODULE_2__.openSettings)();
+      break;
   }
 }
 
@@ -1846,6 +1851,7 @@ const MESSAGES = {
   STOP_DOWNLOADING: "STOP_DOWNLOADING",
   GET_ALL_IMAGES_URLS_FOR_GALLERY: "GET_ALL_IMAGES_URLS_FOR_GALLERY",
   RECEIVE_PRELOADED_IMAGES_URLS: "RECEIVE_PRELOADED_IMAGES_URLS",
+  OPEN_SETTINGS: "OPEN_SETTINGS",
 };
 
 const EXTRACTION_REASON = {

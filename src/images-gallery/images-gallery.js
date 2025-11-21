@@ -24,6 +24,7 @@ const NO_IMAGE_WARNING = document.querySelector('.noImageWarning');
 const ORIGINAL_IMAGE_URL = document.querySelector('.originalImageUrl');
 const DOWNLOAD_THUMBNAIL_BUTTON = document.querySelector('.loadThumbnail');
 const SMALL_THUMBNAIL = document.querySelector('.smallThumbnail');
+const OPEN_SETTINGS_BUTTON = document.querySelector('.openSettings');
 
 browser.runtime.sendMessage({
   type: MESSAGES.IMAGES_GALLERY_COMPLETED,
@@ -56,6 +57,7 @@ setupEventHandler(DOWNLOAD_ALL, "click", downloadAllImages);
 setupEventHandler(DOWNLOAD_ALL_AS_ARCHIVE, "click", downloadAllAsArchive);
 setupEventHandler(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
 setupEventHandler(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
+setupEventHandler(OPEN_SETTINGS_BUTTON, "click", openSettings);
 setupEventHandler(window, 'beforeunload', stopDownloading);
 
 function buildPage (message) {
@@ -307,4 +309,8 @@ function downloadThumbnail (e) {
     isPreloaded: false,
     reason: EXTRACTION_REASON.DOWNLOAD,
   });
+}
+
+function openSettings () {
+  browser.runtime.sendMessage({ type: MESSAGES.OPEN_SETTINGS });
 }
