@@ -116,8 +116,8 @@ async function downloadImage (e) {
   const { specialRule } = window.__PAGE_DATA;
   const { href, url, title, originalPictureHref } = e.target.dataset;
   const { isPreloaded, originalUrl, thumbUrl } = getOriginalUrl(url);
-  
-  if (!isMediaResource(originalUrl, specialRule[0]) && isPreloaded) {
+
+  if (originalUrl && !isMediaResource(originalUrl, specialRule[0]) && isPreloaded) {
     switchLayover();
     onShowingOriginalError(originalUrl, thumbUrl);
     return;
@@ -259,8 +259,9 @@ async function updateOriginalUrls (message) {
     url.isPreloaded = true;
 
     try {
-      const file = await fetch(url.originalUrl || url.thumbUrl).then((res) => res.blob());
-      const extension = extractExtension(url.originalUrl);
+      const downloadUrl = url.originalUrl && isMediaResource(url.originalUrl, specialRule[0]) ? url.originalUrl : url.thumbUrl;
+      const file = await fetch(downloadUrl).then((res) => res.blob());
+      const extension = extractExtension(downloadUrl);
       const rawName =
         specialRule[3] === "URL"
           ? pageUrl
