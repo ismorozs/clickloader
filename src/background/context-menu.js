@@ -1,7 +1,8 @@
 const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
-import { extractAllImageUrls, runUserScript, openSettings } from './actions';
+import { runUserScript, openSettings } from "./actions";
+import { prepareForGalleryPage } from "./actions/gallery";
 
 const EVENT_MEANINGS = {
   contextmenu: 'Right-click',
@@ -164,7 +165,7 @@ function changeSaveMethod (methodIdx) {
 }
 
 async function openPagePictures () {
-  extractAllImageUrls();
+  prepareForGalleryPage();
 }
 
 function changeSaveFolder (folderIdx) {

@@ -28,7 +28,7 @@ const contextMenuKeys = [
   "saveMethod",
   "tryOriginal",
   "galleryImagesTab",
-  "galleryImagesUrls",
+  "galleryData",
   "specialRules",
   "savedOriginalUrls",
   "isGalleryImagesSpecialRule",

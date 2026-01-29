@@ -1,21 +1,12 @@
 const browser = require('webextension-polyfill');
 
-import { EXTRACTION_REASON, MESSAGES } from '../shared/consts';
 import State from '../shared/state';
 import {
-  runUserScript,
-  saveContent,
-  createImagesPage,
-  sendImagesUrls,
-  saveOriginalUrl,
-  saveAllContent,
-  getOriginalImageUrlForGallery,
-  sendOriginalImageUrltoGallery,
-  stopDownloading,
-  getAllOriginalImageUrlsForGallery,
-  openSettings,
+  runUserScript
 } from "./actions";
+
 import { setupContextMenu, onContextMenuClicked } from './context-menu';
+import { onMessage } from './onMessage';
 
 function init () {
   browser.storage.onChanged.addListener(onStorageChange);
@@ -26,57 +17,6 @@ function init () {
   browser.contextMenus.onClicked.addListener(onContextMenuClicked);
 
   State.loadSettings().then(setupContextMenu);
-}
-
-async function onMessage (message) {
-  switch (message.type) {
-
-    case MESSAGES.RECEIVE_ORIGINAL_URL:
-      if (message.tabWithOriginId) {
-        browser.tabs.remove([message.tabWithOriginId]);
-      }
-
-      switch (message.reason) {
-        case EXTRACTION_REASON.DOWNLOAD:
-          saveContent(message);
-          break;
-        case EXTRACTION_REASON.NO_THUMB:
-          saveOriginalUrl(message);
-          break;
-        case EXTRACTION_REASON.FOR_GALLERY:
-          sendOriginalImageUrltoGallery(message);
-          break;
-      }
-      break;
-
-    case MESSAGES.SAVE_ALL_CONTENT:
-      saveAllContent(message);
-      break;
-
-    case MESSAGES.RECEIVE_IMAGES_URLS:
-      createImagesPage(message);
-      break;
-
-    case MESSAGES.GET_IMAGE_URL_FOR_GALLERY:
-      getOriginalImageUrlForGallery(message);
-      break;
-
-    case MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY:
-      getAllOriginalImageUrlsForGallery(message);
-      break;
-
-    case MESSAGES.IMAGES_GALLERY_COMPLETED:
-      sendImagesUrls();
-      break;
-
-    case MESSAGES.STOP_DOWNLOADING:
-      stopDownloading();
-      break;
-
-    case MESSAGES.OPEN_SETTINGS:
-      openSettings();
-      break;
-  }
 }
 
 function onTabActivated (data) {

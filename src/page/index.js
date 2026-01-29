@@ -1,7 +1,6 @@
 const browser = require("webextension-polyfill/dist/browser-polyfill.min");
 
 import { getSpecialRule } from '../background/actions';
-import { tryFindHref } from '../shared/helpers';
 import { EXTRACTION_REASON, MESSAGES } from '../shared/consts';
 
 function init () {
@@ -37,13 +36,13 @@ function sendImageUrl (e) {
     return;
   }
 
-  const { url, originalPictureHref } = extractSrc(e.target);
-  if (url || originalPictureHref) {
+  const { thumbUrl, originalHref } = extractSrc(e.target);
+  if (thumbUrl || originalHref) {
     browser.runtime.sendMessage({
       type: MESSAGES.RECEIVE_ORIGINAL_URL,
       title: document.title,
-      url,
-      originalPictureHref,
+      thumbUrl,
+      originalHref,
       href: document.location.href,
       reason: EXTRACTION_REASON.DOWNLOAD,
     });
@@ -51,10 +50,6 @@ function sendImageUrl (e) {
 }
 
 function extractSrc (el) {
-  const specialRule = getSpecialRule(
-    document.location.href,
-    window.specialRules
-  );
   let url;
 
   const testEl = document.createElement(el.tagName);
@@ -77,9 +72,9 @@ function extractSrc (el) {
   }
 
   const a = el.closest("a");
-  const originalPictureHref = a && a.href;
+  const originalHref = a && a.href;
 
-  return { url, originalPictureHref };
+  return { thumbUrl: url, originalHref };
 }
 
 export default init;

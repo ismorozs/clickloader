@@ -1216,34 +1216,71 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
-/***/ "./src/background/actions.js":
-/*!***********************************!*\
-  !*** ./src/background/actions.js ***!
-  \***********************************/
+/***/ "./src/background/actions/error.js":
+/*!*****************************************!*\
+  !*** ./src/background/actions/error.js ***!
+  \*****************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   changeThumbUrlsToOriginalUrls: () => (/* binding */ changeThumbUrlsToOriginalUrls),
-/* harmony export */   createImagesPage: () => (/* binding */ createImagesPage),
-/* harmony export */   extractAllImageUrls: () => (/* binding */ extractAllImageUrls),
-/* harmony export */   getAllOriginalImageUrlsForGallery: () => (/* binding */ getAllOriginalImageUrlsForGallery),
-/* harmony export */   getOriginalImageUrlForGallery: () => (/* binding */ getOriginalImageUrlForGallery),
+/* harmony export */   ERROR_TYPES: () => (/* binding */ ERROR_TYPES),
+/* harmony export */   sendError: () => (/* binding */ sendError),
+/* harmony export */   sendOriginalNotFoundError: () => (/* binding */ sendOriginalNotFoundError)
+/* harmony export */ });
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../shared/consts */ "./src/shared/consts.js");
+const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
+
+
+const ERROR_TYPES = {
+  ORIGINAL_NOT_FOUND: "ORIGINAL_NOT_FOUND",
+};
+
+const sendError = (tabId, text) => {
+  console.error(e.message, " !!! error during downloading");
+  browser.tabs.sendMessage(tabId, {
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.ERROR,
+    text,
+    type,
+  });
+};
+
+const sendOriginalNotFoundError = (tabId, originalHref) => {
+  sendError(
+    tabId,
+    `Couldn't find an original image on ${originalHref}, thumbnail will be saved instead.`,
+  );
+};
+
+
+/***/ }),
+
+/***/ "./src/background/actions/index.js":
+/*!*****************************************!*\
+  !*** ./src/background/actions/index.js ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   getImageUrlFromNextPage: () => (/* binding */ getImageUrlFromNextPage),
 /* harmony export */   getSpecialRule: () => (/* binding */ getSpecialRule),
 /* harmony export */   openSettings: () => (/* binding */ openSettings),
 /* harmony export */   runUserScript: () => (/* binding */ runUserScript),
-/* harmony export */   saveAllContent: () => (/* binding */ saveAllContent),
+/* harmony export */   saveAllOriginalImagesRaw: () => (/* binding */ saveAllOriginalImagesRaw),
 /* harmony export */   saveContent: () => (/* binding */ saveContent),
-/* harmony export */   saveOriginalUrl: () => (/* binding */ saveOriginalUrl),
-/* harmony export */   sendImagesUrls: () => (/* binding */ sendImagesUrls),
-/* harmony export */   sendOriginalImageUrltoGallery: () => (/* binding */ sendOriginalImageUrltoGallery),
+/* harmony export */   sendDownloadingProgress: () => (/* binding */ sendDownloadingProgress),
 /* harmony export */   stopDownloading: () => (/* binding */ stopDownloading)
 /* harmony export */ });
-/* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
-/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
-/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
+/* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../shared/state */ "./src/shared/state.js");
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../shared/helpers */ "./src/shared/helpers.js");
+/* harmony import */ var _error__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./error */ "./src/background/actions/error.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
 
 
 
@@ -1251,11 +1288,11 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 const SETTINGS_PAGE_URL = "/options/options.html";
 
-async function runUserScript (newActiveState, newSaveMethod, tab) {
+async function runUserScript(newActiveState, newSaveMethod, tab) {
   if (!tab) {
     tab = await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.getCurrentTab)();
   }
-  
+
   if (!(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isHTTPUrl)(tab.url)) {
     return !newActiveState;
   }
@@ -1265,7 +1302,6 @@ async function runUserScript (newActiveState, newSaveMethod, tab) {
 
   const stateOnTab = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tab.id);
   if (!stateOnTab || stateOnTab.url !== tab.url) {
-
     if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active() && !newActiveState) {
       return false;
     }
@@ -1273,143 +1309,70 @@ async function runUserScript (newActiveState, newSaveMethod, tab) {
     executeScriptPromise = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.executeScript)(tab.id, _shared_consts__WEBPACK_IMPORTED_MODULE_1__.SCRIPTS.PAGE);
   }
 
-  if (!stateOnTab || stateOnTab.url !== tab.url || stateOnTab.active !== newActiveState || stateOnTab.saveMethod !== newSaveMethod) {
-    sendMessage = () => browser.tabs.sendMessage(tab.id, { action: 'switchClickHandler', active: newActiveState, saveMethod: newSaveMethod, specialCases: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules() });
+  if (
+    !stateOnTab ||
+    stateOnTab.url !== tab.url ||
+    stateOnTab.active !== newActiveState ||
+    stateOnTab.saveMethod !== newSaveMethod
+  ) {
+    sendMessage = () =>
+      browser.tabs.sendMessage(tab.id, {
+        action: "switchClickHandler",
+        active: newActiveState,
+        saveMethod: newSaveMethod,
+        specialCases: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules(),
+      });
   }
 
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tab.id, { id: tab.id, active: newActiveState, saveMethod: newSaveMethod, url: tab.url });
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tabState(tab.id, {
+    id: tab.id,
+    active: newActiveState,
+    saveMethod: newSaveMethod,
+    url: tab.url,
+  });
 
   executeScriptPromise.then(sendMessage);
   return newActiveState;
 }
 
-async function extractAllImageUrls () {
-  const tab = await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.getCurrentTab)();
-  await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.executeScript)(tab.id, _shared_consts__WEBPACK_IMPORTED_MODULE_1__.SCRIPTS.EXTRACT_ALL_IMAGES_URLS);
-  browser.tabs.sendMessage(tab.id, { type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.GET_PICTURE_URLS, specialRules: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules() })
-}
-
-async function createImagesPage (message) {
-  const tab = await browser.tabs.create({
-    active: true,
-    url: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.IMAGES_GALLERY_URL,
-  });
-
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isGalleryImagesSpecialRule(message.isSpecialRule);
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesTab(tab);
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesUrls(message);
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].thumbsCount(message.urls.length);
-
-  if (!message.urls[0].thumbUrl) {
-    handleNoThumbsCase(message);
-  }
-}
-
-async function handleNoThumbsCase (message) {
-  const specialRule = getSpecialRule(message.url, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
-
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(true);
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(true);
-
-  for (let i = 0; i < message.urls.length; i++) {
-    if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress()) {
-      _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
-      _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(false);
-      return;
-    }
-
-    await getOriginalImageUrl({
-      pageUrl: message.urls[i].originalUrl,
-      imageSelector: specialRule[2],
-      reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.NO_THUMB,
-    });
-  }
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(false);
-}
-
-async function changeThumbUrlsToOriginalUrls () {
-  const newUrls = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls().map(({ url }) => ({
-    thumbUrl: url,
-    originalUrl: url,
-    isPreloaded: true,
-  }));
-
-  const galleryData = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesUrls();
-  galleryData.urls = newUrls;
-
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesUrls(galleryData);
-}
-
-async function sendImagesUrls () {
-  const tab = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesTab();
-  const urls = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesUrls();
-  const isSpecialRule = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isGalleryImagesSpecialRule();
-
-  if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase()); {
-    _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
-  }
-
-  browser.tabs.sendMessage(tab.id, {
-    ...urls,
-    tabId: tab.id,
-    isSpecialRule,
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_IMAGES_URLS,
-    isNoThumbs: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(),
-    specialRule: getSpecialRule(urls.url, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules())
-  });
-}
-
-async function saveOriginalUrl (message) {
-  const savedOriginalUrls = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls();
-  savedOriginalUrls.push(message);
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls(savedOriginalUrls);
-
-  if (_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].thumbsCount() === savedOriginalUrls.length) {
-    if (_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase()) {
-      updateUrlsAndResendImagesToGallery();
-      return;
-    }
-
-    sendPreloadedUrlsToGallery();
-  }
-}
-
-async function updateUrlsAndResendImagesToGallery () {
-  changeThumbUrlsToOriginalUrls();
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(false);
-  sendImagesUrls();
-}
-
-async function sendPreloadedUrlsToGallery() {
-  browser.tabs.sendMessage(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesTab().id, {
-    originalUrls: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls(),
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS,
-  });
-
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
-}
-
-async function saveContent (message) {
-  const { title, url, thumbUrl, originalPictureHref, href, isFromSpecialCase, isFromGallery, isPreloaded } = message;
-  const specialRule = getSpecialRule(href, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
+async function saveContent(message) {
+  const {
+    title,
+    thumbUrl,
+    href,
+    originalUrl,
+    originalHref,
+    originalTitle,
+    isPreloaded,
+    galleryTabId,
+    isFromGallery,
+    isFromSpecialCase,
+  } = message;
+  const [, , S_ORIGINAL_SELECTOR, S_NAMING, S_FOLDER_NAME] = getSpecialRule(
+    href,
+    _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules(),
+  );
   const tryOriginal = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].tryOriginal();
-  const isValidOriginalPictureHref =
-    originalPictureHref &&
-    originalPictureHref.length &&
-    originalPictureHref !== "null";
+  const isValidOriginalHref =
+    originalHref &&
+    originalHref.length &&
+    originalHref !== "null";
 
   if (
-    isValidOriginalPictureHref &&
-    !isPreloaded &&
+    !originalUrl &&
     !isFromSpecialCase &&
-    specialRule[2] &&
-    (isFromGallery || tryOriginal)
+    isValidOriginalHref &&
+    !isPreloaded &&
+    S_ORIGINAL_SELECTOR &&
+    (tryOriginal || isFromGallery)
   ) {
     try {
-      await getOriginalImageUrl({
-        pageUrl: originalPictureHref,
+      await getImageUrlFromNextPage({
+        title,
+        href,
         thumbUrl,
-        imageSelector: specialRule[2],
+        originalHref,
+        imageSelector: S_ORIGINAL_SELECTOR,
         reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.DOWNLOAD,
       });
     } catch (e) {
@@ -1418,59 +1381,71 @@ async function saveContent (message) {
     return;
   }
 
-
-  const saveFolder = `${_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder()}/${specialRule[4]}/`.replace(/\/+/g, "/");
-  const rawName = specialRule[3] === "URL" ? href : title;
+  const saveFolder = `${_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolder()}/${S_FOLDER_NAME}/`.replace(
+    /\/+/g,
+    "/",
+  );
+  const rawName = S_NAMING === "URL" ? href : title;
   const handledName = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.removeForbiddenCharacters)(rawName, true).substring(
     0,
     _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MAX_FILE_NAME,
   );
-  const fileExtension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(url || originalPictureHref || thumbUrl);
-  const originalFileExtension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(originalPictureHref || url || thumbUrl);
-  const isDefaultDownloadOriginalCase =
-    tryOriginal && !specialRule[2] && isValidOriginalPictureHref;
-  const [downloadUrl, extension] = isDefaultDownloadOriginalCase
-    ? [originalPictureHref,  originalFileExtension]
-    : [url, fileExtension];
+  const fileExtension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(
+    originalUrl || thumbUrl,
+  );
+
+  let [downloadUrl, extension] = [thumbUrl, fileExtension];
+
+  if ((isFromGallery || tryOriginal) && !S_ORIGINAL_SELECTOR && isValidOriginalHref) {
+    [downloadUrl, extension] = [originalHref, (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(originalHref)];
+  }
+
+  if (originalUrl) {
+    [downloadUrl, extension] = [originalUrl, fileExtension];
+  }
+
   const name = `${saveFolder}${handledName}.${extension}`;
 
   try {
     await download(downloadUrl, name);
   } catch (e) {
-    console.error(e.message, " !!! error during downloading")
-    await download(url || thumbUrl, name);
+    (0,_error__WEBPACK_IMPORTED_MODULE_3__.sendOriginalNotFoundError)(galleryTabId, originalHref);
+    await download(thumbUrl, name);
   }
 }
 
-async function saveAllContent (message) {
+async function saveAllOriginalImagesRaw(message) {
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(true);
 
   for (let i = 0; i < message.urls.length; i++) {
-    const { thumbUrl, originalUrl, isPreloaded } = message.urls[i];
-    const originalPictureHref = originalUrl !== "null" ? originalUrl : '';
-    const url = isPreloaded ? originalUrl : thumbUrl;
+    const { thumbUrl, originalHref, isPreloaded } = message.urls[i];
 
     if (_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress()) {
       await saveContent({
         ...message,
-        url: thumbUrl,
         thumbUrl,
-        originalPictureHref,
+        originalHref,
         type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.SAVE_CONTENT,
         isPreloaded,
+        isFromGallery: true,
+        galleryTabId: message.tabId,
       });
-      await sendDownloadingProgress(message.tabId, i + 1, `Downloading: ${originalPictureHref}`);
+      await sendDownloadingProgress(
+        message.tabId,
+        i + 1,
+        `Downloading: ${originalHref}`,
+      );
     }
   }
   sendDownloadingProgress(message.tabId, 0);
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(false);
 }
 
-async function stopDownloading () {
+async function stopDownloading() {
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(false);
 }
 
-async function sendDownloadingProgress (tabId, count, filename) {
+async function sendDownloadingProgress(tabId, count, filename) {
   await browser.tabs.sendMessage(tabId, {
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_DOWNLOADING_PROGRESS,
     count,
@@ -1478,30 +1453,37 @@ async function sendDownloadingProgress (tabId, count, filename) {
   });
 }
 
-async function download (url, filename) {
+async function download(url, filename) {
   await browser.downloads.download({ url, saveAs: false, filename });
 }
 
-async function getOriginalImageUrlForGallery (message) {
-  const specialRule = getSpecialRule(message.originalPictureHref, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
-  getOriginalImageUrl({ pageUrl: message.originalPictureHref, imageSelector: specialRule[2], reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.FOR_GALLERY, tabId: message.tabId });
-}
-
-async function sendOriginalImageUrltoGallery ({ tabId, href, url }) {
-  browser.tabs.sendMessage(tabId, { href, originalUrl: url, type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL });
-}
-
-async function getOriginalImageUrl ({ pageUrl, imageSelector, reason, tabId, thumbUrl }) {
+async function getImageUrlFromNextPage({
+  originalHref,
+  imageSelector,
+  reason,
+  galleryTabId,
+  thumbUrl,
+  title,
+  href,
+}) {
   const newTab = await browser.tabs.create({
-    url: pageUrl,
+    url: originalHref,
     active: false,
   });
 
   await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.executeScript)(newTab.id, _shared_consts__WEBPACK_IMPORTED_MODULE_1__.SCRIPTS.DOWNLOAD_ORIGINAL_IMAGE_URL);
-  await browser.tabs.sendMessage(newTab.id, { imageSelector, reason, tabId, tabWithOriginId: newTab.id, thumbUrl });
+  await browser.tabs.sendMessage(newTab.id, {
+    imageSelector,
+    reason,
+    galleryTabId,
+    tabWithOriginId: newTab.id,
+    thumbUrl,
+    title,
+    href,
+  });
 }
 
-function getSpecialRule (url, specialRules) {
+function getSpecialRule(url, specialRules) {
   for (const params of specialRules) {
     if (url.startsWith(params[0])) {
       return params;
@@ -1509,46 +1491,6 @@ function getSpecialRule (url, specialRules) {
   }
 
   return [];
-}
-
-async function getAllOriginalImageUrlsForGallery (message) {
-  const specialRule = getSpecialRule(message.href, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(true);
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
-
-  getAllOriginalImageUrlsConsecutively(
-    message,
-    0,
-    specialRule,
-  );
-}
-
-async function getAllOriginalImageUrlsConsecutively(message, i, specialRule) {
-  if (i >= message.urls.length) {
-    return;
-  }
-
-  const { thumbUrl, originalUrl, isPreloaded } = message.urls[i];
-
-  if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress()) {
-    sendDownloadingProgress(message.tabId, 0);
-    _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
-    return;
-  }
-
-  sendDownloadingProgress(message.tabId, i + 1, `Preparing: ${originalUrl}`);
-
-  if (isPreloaded || !(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isValidUrl)(originalUrl)) {
-    saveOriginalUrl({ href: originalUrl, url: originalUrl || thumbUrl });
-  } else {
-    await getOriginalImageUrl({
-      pageUrl: originalUrl,
-      imageSelector: specialRule[2],
-      reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.NO_THUMB,
-    });
-  }
-
-  setTimeout(() => getAllOriginalImageUrlsConsecutively(message, i + 1, specialRule), 0);
 }
 
 function openSettings() {
@@ -1579,7 +1521,7 @@ const MESSAGES = {
   GET_PICTURE_URLS: "GET_PICTURE_URLS",
   RECEIVE_IMAGES_URLS: "RECEIVE_IMAGES_URLS",
   IMAGES_GALLERY_COMPLETED: "IMAGES_GALLERY_COMPLETED",
-  SAVE_ALL_CONTENT: "SAVE_ALL_CONTENT",
+  SAVE_ALL_CONTENT_RAW: "SAVE_ALL_CONTENT_RAW",
   GET_IMAGE_URL_FOR_GALLERY: "GET_IMAGE_URL_FOR_GALLERY",
   RECEIVE_ORIGINAL_URL: "RECEIVE_ORIGINAL_URL",
   RECEIVE_ORIGINAL_IMAGE_URL: "RECEIVE_ORIGINAL_IMAGE_URL",
@@ -1588,13 +1530,14 @@ const MESSAGES = {
   GET_ALL_IMAGES_URLS_FOR_GALLERY: "GET_ALL_IMAGES_URLS_FOR_GALLERY",
   RECEIVE_PRELOADED_IMAGES_URLS: "RECEIVE_PRELOADED_IMAGES_URLS",
   OPEN_SETTINGS: "OPEN_SETTINGS",
+  ERROR: "ERROR",
 };
 
 const EXTRACTION_REASON = {
   DOWNLOAD: "DOWNLOAD",
-  NO_THUMB: "NO_THUMB",
-  FOR_GALLERY: "FOR_GALLERY",
-}
+  COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
+  GET_ORIGINAL_URL: "GET_ORIGINAL_URL",
+};
 
 const MAX_FILE_NAME = 100;
 
@@ -1738,7 +1681,7 @@ const contextMenuKeys = [
   "saveMethod",
   "tryOriginal",
   "galleryImagesTab",
-  "galleryImagesUrls",
+  "galleryData",
   "specialRules",
   "savedOriginalUrls",
   "isGalleryImagesSpecialRule",
@@ -1888,7 +1831,7 @@ __webpack_require__.r(__webpack_exports__);
 const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyfill.min */ "./node_modules/webextension-polyfill/dist/browser-polyfill.min.js");
 const { MESSAGES } = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
 
-const { getSpecialRule } = __webpack_require__(/*! ../background/actions */ "./src/background/actions.js");
+const { getSpecialRule } = __webpack_require__(/*! ../background/actions */ "./src/background/actions/index.js");
 
 const REDUNDANT_ELEMENTS = ["SCRIPT", "IFRAME"];
 
@@ -1897,14 +1840,14 @@ browser.runtime.onMessage.addListener(onMessage);
 function onMessage (message) {
   switch (message.type) {
     case MESSAGES.GET_PICTURE_URLS:
-      getPictureUrls(message);
+      getAllThumbsAndOriginalHrefs(message);
       break;
   }
 }
 
-async function getPictureUrls ({ specialRules }) {
-  const specialRule = getSpecialRule(document.location.href, specialRules)
-  const imageSelector = specialRule[1] || "[src]";
+async function getAllThumbsAndOriginalHrefs ({ specialRules }) {
+  const [ , S_THUMB_SELECTOR, S_ORIGINAL_SELECTOR ] = getSpecialRule(document.location.href, specialRules)
+  const imageSelector = S_THUMB_SELECTOR || "[src]";
 
   let urls = Array.from(document.querySelectorAll(imageSelector))
     .filter((el) => {
@@ -1912,18 +1855,20 @@ async function getPictureUrls ({ specialRules }) {
     })
     .map((img) => {
       const a = img.closest("a");
+      const isPreloaded = !S_ORIGINAL_SELECTOR;
 
       return {
         thumbUrl: img.src,
-        originalUrl: a && a.href,
-        isPreloaded: specialRule[2].length === 0
+        originalHref: a && a.href,
+        isPreloaded,
+        originalUrl: isPreloaded && a && a.href,
       };
     });
 
   await browser.runtime.sendMessage({
     type: MESSAGES.RECEIVE_IMAGES_URLS,
     title: document.title,
-    url: document.location.href,
+    href: document.location.href,
     urls,
   });
 

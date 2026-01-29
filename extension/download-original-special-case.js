@@ -44,7 +44,7 @@ const MESSAGES = {
   GET_PICTURE_URLS: "GET_PICTURE_URLS",
   RECEIVE_IMAGES_URLS: "RECEIVE_IMAGES_URLS",
   IMAGES_GALLERY_COMPLETED: "IMAGES_GALLERY_COMPLETED",
-  SAVE_ALL_CONTENT: "SAVE_ALL_CONTENT",
+  SAVE_ALL_CONTENT_RAW: "SAVE_ALL_CONTENT_RAW",
   GET_IMAGE_URL_FOR_GALLERY: "GET_IMAGE_URL_FOR_GALLERY",
   RECEIVE_ORIGINAL_URL: "RECEIVE_ORIGINAL_URL",
   RECEIVE_ORIGINAL_IMAGE_URL: "RECEIVE_ORIGINAL_IMAGE_URL",
@@ -53,13 +53,14 @@ const MESSAGES = {
   GET_ALL_IMAGES_URLS_FOR_GALLERY: "GET_ALL_IMAGES_URLS_FOR_GALLERY",
   RECEIVE_PRELOADED_IMAGES_URLS: "RECEIVE_PRELOADED_IMAGES_URLS",
   OPEN_SETTINGS: "OPEN_SETTINGS",
+  ERROR: "ERROR",
 };
 
 const EXTRACTION_REASON = {
   DOWNLOAD: "DOWNLOAD",
-  NO_THUMB: "NO_THUMB",
-  FOR_GALLERY: "FOR_GALLERY",
-}
+  COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
+  GET_ORIGINAL_URL: "GET_ORIGINAL_URL",
+};
 
 const MAX_FILE_NAME = 100;
 
@@ -149,20 +150,22 @@ const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyf
 
 browser.runtime.onMessage.addListener(onMessage);
 
-function onMessage ({ imageSelector, reason, tabId, tabWithOriginId, thumbUrl }) {
+function onMessage ({ imageSelector, reason, galleryTabId, tabWithOriginId, thumbUrl, title, href }) {
   const img = document.querySelector(imageSelector);
   const url = img && img.src;
 
   browser.runtime.sendMessage({
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_URL,
-    title: document.title,
-    url,
-    href: document.location.href,
-    reason,
-    tabId,
-    isFromSpecialCase: true,
-    tabWithOriginId,
+    title,
+    href,
     thumbUrl,
+    originalUrl: url,
+    originalHref: document.location.href,
+    originalTitle: document.title,
+    reason,
+    galleryTabId,
+    tabWithOriginId,
+    isFromSpecialCase: true,
   });
 }
 

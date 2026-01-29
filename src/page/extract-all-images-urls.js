@@ -10,14 +10,14 @@ browser.runtime.onMessage.addListener(onMessage);
 function onMessage (message) {
   switch (message.type) {
     case MESSAGES.GET_PICTURE_URLS:
-      getPictureUrls(message);
+      getAllThumbsAndOriginalHrefs(message);
       break;
   }
 }
 
-async function getPictureUrls ({ specialRules }) {
-  const specialRule = getSpecialRule(document.location.href, specialRules)
-  const imageSelector = specialRule[1] || "[src]";
+async function getAllThumbsAndOriginalHrefs ({ specialRules }) {
+  const [ , S_THUMB_SELECTOR, S_ORIGINAL_SELECTOR ] = getSpecialRule(document.location.href, specialRules)
+  const imageSelector = S_THUMB_SELECTOR || "[src]";
 
   let urls = Array.from(document.querySelectorAll(imageSelector))
     .filter((el) => {
@@ -25,18 +25,20 @@ async function getPictureUrls ({ specialRules }) {
     })
     .map((img) => {
       const a = img.closest("a");
+      const isPreloaded = !S_ORIGINAL_SELECTOR;
 
       return {
         thumbUrl: img.src,
-        originalUrl: a && a.href,
-        isPreloaded: specialRule[2].length === 0
+        originalHref: a && a.href,
+        isPreloaded,
+        originalUrl: isPreloaded && a && a.href,
       };
     });
 
   await browser.runtime.sendMessage({
     type: MESSAGES.RECEIVE_IMAGES_URLS,
     title: document.title,
-    url: document.location.href,
+    href: document.location.href,
     urls,
   });
 

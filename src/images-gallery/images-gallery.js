@@ -53,7 +53,7 @@ function onMessage(message) {
       updateTotalDownloadCount(message);
       break;
     case MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS:
-      updateOriginalUrls(message);
+      downloadAllAsArchive(message);
       break;
   }
 }
@@ -63,7 +63,7 @@ setupEventHandler(LAYOVER, "click", switchLayover);
 setupEventHandler(BIG_IMAGE, "click", switchLayover);
 setupEventHandler(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
 setupEventHandler(DOWNLOAD_ALL, "click", downloadAllImages);
-setupEventHandler(DOWNLOAD_ALL_AS_ARCHIVE, "click", downloadAllAsArchive);
+setupEventHandler(DOWNLOAD_ALL_AS_ARCHIVE, "click", prepareDownloadAllAsArchive);
 setupEventHandler(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
 setupEventHandler(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
 setupEventHandler(OPEN_SETTINGS_BUTTON, "click", openSettings);
@@ -73,10 +73,10 @@ function buildPage (message) {
   window.__PAGE_DATA = message;
   NO_THUMB_WARNING.classList.remove("show");
   emptyNode(IMAGES);
-  const { title, url, urls, isNoThumbs } = message;
+  const { title, href, urls, isNoThumbs } = message;
   document.title = `All images for ${title}`;
   PAGE_TITLE.textContent = title;
-  PAGE_URL.textContent = url;
+  PAGE_URL.textContent = href;
   IMAGES_COUNT.textContent = message.urls.length;
   TOTAL_DOWNLOAD_COUNT.textContent = `/${message.urls.length}`;
 
@@ -85,21 +85,21 @@ function buildPage (message) {
     return;
   }
 
-  urls.forEach(({ thumbUrl, originalUrl }) => {
+  urls.forEach(({ thumbUrl, originalHref }) => {
     const card = createElement("div", "", ["card"]);
     const img = createElement("img", thumbUrl, ["image"]);
-    img.dataset.originalPictureHref = originalUrl;
+    img.dataset.originalHref = originalHref;
 
-    if (originalUrl && isVideo(originalUrl)) {
+    if (originalHref && isVideo(originalHref)) {
       img.classList.add("video");
-    } 
+    }
 
     const downloadButton = createElement("button", "", ["download"]);
     downloadButton.title = "Download";
-    downloadButton.dataset.originalPictureHref = originalUrl;
+    downloadButton.dataset.originalHref = originalHref;
     downloadButton.dataset.title = message.title;
-    downloadButton.dataset.href = message.url;
-    downloadButton.dataset.url = thumbUrl;
+    downloadButton.dataset.href = message.href;
+    downloadButton.dataset.thumbUrl = thumbUrl;
 
     card.appendChild(img);
     card.appendChild(downloadButton);
@@ -123,23 +123,22 @@ function handleImage (e) {
 
 async function downloadImage (e) {
   const { specialRule } = window.__PAGE_DATA;
-  const { href, url, title, originalPictureHref } = e.target.dataset;
-  const { isPreloaded, originalUrl, thumbUrl } = getOriginalUrl(url);
+  const { href, thumbUrl, title  } = e.target.dataset;
+  const { isPreloaded, originalHref } = getPictureData(thumbUrl);
 
-  if (originalUrl && !isMediaResource(originalUrl, specialRule[0]) && isPreloaded) {
+  if (originalHref && !isMediaResource(originalHref, specialRule[0]) && isPreloaded) {
     switchLayover();
-    onShowingOriginalError(originalUrl, thumbUrl);
+    onShowingOriginalError(originalHref, thumbUrl);
     return;
   }
 
   browser.runtime.sendMessage({
     type: MESSAGES.RECEIVE_ORIGINAL_URL,
     title,
-    originalPictureHref,
+    originalHref,
     href,
+    thumbUrl,
     isFromGallery: true,
-    url: isPreloaded && originalUrl !== null ? originalUrl : url,
-    isPreloaded,
     reason: EXTRACTION_REASON.DOWNLOAD,
   });
 }
@@ -147,9 +146,9 @@ async function downloadImage (e) {
 async function showOriginal(e) {
   switchLayover(e);
 
-  const { title, url } = window.__PAGE_DATA;
-  const { originalPictureHref } = e.target.dataset;
-  const { isPreloaded, originalUrl, thumbUrl } = getOriginalUrl(e.target.src);
+  const { title, href, tabId } = window.__PAGE_DATA;
+  const { originalHref } = e.target.dataset;
+  const { isPreloaded, originalUrl, thumbUrl } = getPictureData(e.target.src);
 
   if (isPreloaded) {
     updateBigPicture(originalUrl, thumbUrl);
@@ -158,28 +157,26 @@ async function showOriginal(e) {
 
   browser.runtime.sendMessage({
     type: MESSAGES.GET_IMAGE_URL_FOR_GALLERY,
-    tabId: window.__PAGE_DATA.tabId,
+    galleryTabId: tabId,
     title,
-    originalPictureHref,
-    href: url,
-    isFromGallery: true,
-    url: e.target.src,
-    reason: EXTRACTION_REASON.FOR_GALLERY,
+    originalHref,
+    href,
+    thumbUrl,
+    reason: EXTRACTION_REASON.GET_ORIGINAL_URL,
   });
 }
 
 async function downloadAllImages () {
-  const { title, url, urls, tabId } = window.__PAGE_DATA;
+  const { title, href, urls, tabId } = window.__PAGE_DATA;
 
   TOTAL_DOWNLOAD_COUNT.classList.add("show");
   DOWNLOAD_LEFT.textContent = 0;
   switchDownloadPanel();
 
   browser.runtime.sendMessage({
-    type: MESSAGES.SAVE_ALL_CONTENT,
+    type: MESSAGES.SAVE_ALL_CONTENT_RAW,
     title,
-    href: url,
-    isFromGallery: true,
+    href,
     urls,
     tabId,
   }); 
@@ -193,18 +190,22 @@ function switchLayover () {
 }
 
 function updateOriginalUrl (message) {
-  const item = window.__PAGE_DATA.urls.find((el) => el.originalUrl === message.href);
+  const item = window.__PAGE_DATA.urls.find((el) => el.originalHref === message.originalHref);
   item.originalUrl = message.originalUrl;
   item.isPreloaded = true;
   updateBigPicture(message.originalUrl, item.thumbUrl);
 }
 
-function updateBigPicture (src, thumbUrl) {
+function updateBigPicture (originalUrl, thumbUrl) {
   const { specialRule } = window.__PAGE_DATA;
   BIG_IMAGE.style.maxHeight = `${window.innerHeight}px`;
-  BIG_IMAGE.src = src && isMediaResource(src, specialRule[0]) ? src : thumbUrl;
+  BIG_IMAGE.src =
+    originalUrl && isMediaResource(originalUrl, specialRule[0])
+      ? originalUrl
+      : thumbUrl;
 }
-function getOriginalUrl (thumbUrl) {
+
+function getPictureData (thumbUrl) {
   const item = window.__PAGE_DATA.urls.find((url) => url.thumbUrl === thumbUrl);
 
   return item || {};
@@ -238,24 +239,24 @@ function stopDownloading () {
   window.__PAGE_DATA.isDownloading = false;
 }
 
-async function downloadAllAsArchive () {
-  const { title, url, urls, tabId } = window.__PAGE_DATA;
+async function prepareDownloadAllAsArchive () {
+  const { title, href, urls, tabId } = window.__PAGE_DATA;
 
   switchDownloadPanel();
 
   browser.runtime.sendMessage({
     type: MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY,
     title,
-    href: url,
-    isFromGallery: true,
+    href,
     urls,
-    tabId,
+    galleryTabId: tabId,
   });
 }
 
-async function updateOriginalUrls (message) {
+async function downloadAllAsArchive (message) {
   const zip = new JSZip();
-  const { urls, url: pageUrl, title, specialRule } = window.__PAGE_DATA;
+  const { urls, href, title, specialRule } = window.__PAGE_DATA;
+  const [S_ORIGIN,,,S_NAMING] = specialRule;
 
   window.__PAGE_DATA.isDownloading = true;
   let info = DOWNLOAD_INFO_HEADRERS.join("\t") + "\n";
@@ -266,29 +267,31 @@ async function updateOriginalUrls (message) {
       return;
     }
 
-    const url = window.__PAGE_DATA.urls[i];
-    const newUrlData = message.originalUrls.find(
-      ({ href }) => href === url.originalUrl || href && href.startsWith(url.originalUrl)
+    const pictureData = window.__PAGE_DATA.urls[i];
+    const newPictureData = message.originalUrls.find(
+      ({ originalHref }) =>
+        originalHref === pictureData.originalHref ||
+        (originalHref && originalHref.startsWith(pictureData.originalHref)),
     );
-    url.originalUrl = newUrlData.url;
-    url.title = newUrlData.title;
-    url.isPreloaded = true;
+
+    Object.assign(pictureData, newPictureData, { isPreloaded: true });
+    const { thumbUrl, originalHref, originalUrl, originalTitle } = pictureData;
 
     try {
-      const downloadUrl = url.originalUrl && isMediaResource(url.originalUrl, specialRule[0]) ? url.originalUrl : url.thumbUrl;
+      const downloadUrl = originalUrl && isMediaResource(originalUrl, S_ORIGIN) ? originalUrl : thumbUrl;
       updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
       const file = await fetch(downloadUrl).then((res) => res.blob());
       const extension = extractExtension(downloadUrl);
       const shortTitle = title.substring(0, MAX_FILE_NAME);
-      const rawName = specialRule[3] === "URL" ? pageUrl : shortTitle;
+      const rawName = S_NAMING === "URL" ? href : shortTitle;
       const name = `${removeForbiddenCharacters(rawName)} (${i + 1})`;
       zip.file(`${name}.${extension}`, file);
       info +=
-        [shortTitle, pageUrl, url.thumbUrl, url.originalUrl, url.title].join(
+        [shortTitle, href, thumbUrl, originalHref, originalUrl, originalTitle].join(
           "\t",
         ) + "\n";
     } catch (e) {
-      console.log(e)
+      console.error(e);
     }
   }
 
@@ -317,17 +320,13 @@ function onShowingOriginalError (url, thumbUrl) {
 
 function downloadThumbnail (e) {
   e.stopPropagation();
-  const { title, url: href } = window.__PAGE_DATA;
-  const url = e.target.dataset.thumbUrl;
+  const { title, href } = window.__PAGE_DATA;
 
   browser.runtime.sendMessage({
     type: MESSAGES.RECEIVE_ORIGINAL_URL,
     title,
-    originalPictureHref: url,
     href,
-    isFromGallery: true,
-    url,
-    isPreloaded: false,
+    thumbUrl: e.target.dataset.thumbUrl,
     reason: EXTRACTION_REASON.DOWNLOAD,
   });
 }
