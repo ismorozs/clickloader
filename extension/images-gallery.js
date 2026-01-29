@@ -1389,6 +1389,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   createElement: () => (/* binding */ createElement),
 /* harmony export */   createSelect: () => (/* binding */ createSelect),
+/* harmony export */   downloadFile: () => (/* binding */ downloadFile),
 /* harmony export */   emptyNode: () => (/* binding */ emptyNode),
 /* harmony export */   hasClass: () => (/* binding */ hasClass),
 /* harmony export */   setupEventHandler: () => (/* binding */ setupEventHandler)
@@ -1448,6 +1449,18 @@ function hasClass (el, className) {
   return el.classList.contains(className);
 }
 
+function downloadFile (content, type, filename) {
+  const file = new Blob([content], { type });
+  const href = URL.createObjectURL(file);
+
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(href);
+}
 
 /***/ })
 
@@ -1549,6 +1562,7 @@ const BIG_IMAGE = document.querySelector(".bigImage");
 const POPUP_CONTAINER = document.querySelector(".popupContainer");
 const DOWNLOAD_PROGRESS = document.querySelector(".downloadProgress");
 const DOWNLOAD_LEFT = document.querySelector(".downloadLeft");
+const DOWNLOADING_FILE = document.querySelector(".downloadingFile");
 const TOTAL_DOWNLOAD_COUNT = document.querySelector(".totalDownloadCount");
 const STOP_DOWNLOADING_BUTTON = document.querySelector(".stopDownloading");
 const NO_THUMB_WARNING = document.querySelector('.noThumbWarning');
@@ -1557,6 +1571,14 @@ const ORIGINAL_IMAGE_URL = document.querySelector('.originalImageUrl');
 const DOWNLOAD_THUMBNAIL_BUTTON = document.querySelector('.loadThumbnail');
 const SMALL_THUMBNAIL = document.querySelector('.smallThumbnail');
 const OPEN_SETTINGS_BUTTON = document.querySelector('.openSettings');
+
+const DOWNLOAD_INFO_HEADRERS = [
+  "Title",
+  "URL",
+  "Thumb",
+  "Original",
+  "Original Title",
+];
 
 browser.runtime.sendMessage({
   type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.IMAGES_GALLERY_COMPLETED,
@@ -1733,13 +1755,19 @@ function getOriginalUrl (thumbUrl) {
   return item || {};
 }
 
-function updateTotalDownloadCount ({ count }) {
-  if (count) {
-    DOWNLOAD_LEFT.textContent = count;
+function updateTotalDownloadCount ({ count, filename }) {
+  if (!count) {
+    switchDownloadPanel();
     return;
   }
 
-  switchDownloadPanel();
+  if (count) {
+    DOWNLOAD_LEFT.textContent = count;
+  }
+
+  if (filename) {
+    DOWNLOADING_FILE.textContent = filename;
+  }
 }
 
 function switchDownloadPanel () {
@@ -1758,8 +1786,6 @@ function stopDownloading () {
 async function downloadAllAsArchive () {
   const { title, url, urls, tabId } = window.__PAGE_DATA;
 
-  TOTAL_DOWNLOAD_COUNT.classList.remove("show");
-  DOWNLOAD_LEFT.textContent = "Preparing...";
   switchDownloadPanel();
 
   browser.runtime.sendMessage({
@@ -1776,9 +1802,8 @@ async function updateOriginalUrls (message) {
   const zip = new JSZip();
   const { urls, url: pageUrl, title, specialRule } = window.__PAGE_DATA;
 
-  TOTAL_DOWNLOAD_COUNT.classList.add("show");
-  DOWNLOAD_LEFT.textContent = "0";
   window.__PAGE_DATA.isDownloading = true;
+  let info = DOWNLOAD_INFO_HEADRERS.join("\t") + "\n";
 
   for (let i = 0; i < urls.length; i++) {
     if (!window.__PAGE_DATA.isDownloading) {
@@ -1787,24 +1812,32 @@ async function updateOriginalUrls (message) {
     }
 
     const url = window.__PAGE_DATA.urls[i];
-    url.originalUrl = message.originalUrls[url.originalUrl];
+    const newUrlData = message.originalUrls.find(
+      ({ href }) => href === url.originalUrl || href && href.startsWith(url.originalUrl)
+    );
+    url.originalUrl = newUrlData.url;
+    url.title = newUrlData.title;
     url.isPreloaded = true;
 
     try {
       const downloadUrl = url.originalUrl && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isMediaResource)(url.originalUrl, specialRule[0]) ? url.originalUrl : url.thumbUrl;
+      updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
       const file = await fetch(downloadUrl).then((res) => res.blob());
       const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(downloadUrl);
-      const rawName =
-        specialRule[3] === "URL"
-          ? pageUrl
-          : `${title.substring(0, _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME)}(${i + 1})`;
-      const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.removeForbiddenCharacters)(rawName);
+      const shortTitle = title.substring(0, _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
+      const rawName = specialRule[3] === "URL" ? pageUrl : shortTitle;
+      const name = `${(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.removeForbiddenCharacters)(rawName)} (${i + 1})`;
       zip.file(`${name}.${extension}`, file);
-      updateTotalDownloadCount({ count: i + 1 });
+      info +=
+        [shortTitle, pageUrl, url.thumbUrl, url.originalUrl, url.title].join(
+          "\t",
+        ) + "\n";
     } catch (e) {
       console.log(e)
     }
   }
+
+  zip.file(`info.txt`, new Blob([info], { type: "text/plain" }));
 
   const zipData = await zip.generateAsync({
     type: "blob",

@@ -221,6 +221,7 @@ button:active {
   justify-content: flex-end;
   margin-right: 3px;
   display: none;
+  gap: 15px;
 }
 
 .downloadProgress.show {
@@ -242,21 +243,12 @@ button:active {
   -webkit-mask-composite: source-out;
           mask-composite: subtract;
   animation: spinner 1.5s infinite linear;
-  margin-right: 15px;
 }
 
 @keyframes spinner {
   to{
     transform: rotate(1turn)
   }
-}
-
-.totalDownloadCount {
-  display: none;
-}
-
-.totalDownloadCount.show {
-  display: inline;
 }
 
 .noThumbWarning {

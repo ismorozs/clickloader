@@ -4,7 +4,7 @@ import { MESSAGES } from "../shared/consts";
 
 browser.runtime.onMessage.addListener(onMessage);
 
-function onMessage ({ imageSelector, reason, tabId, tabWithOriginId }) {
+function onMessage ({ imageSelector, reason, tabId, tabWithOriginId, thumbUrl }) {
   const img = document.querySelector(imageSelector);
   const url = img && img.src;
 
@@ -17,5 +17,6 @@ function onMessage ({ imageSelector, reason, tabId, tabWithOriginId }) {
     tabId,
     isFromSpecialCase: true,
     tabWithOriginId,
+    thumbUrl,
   });
 }

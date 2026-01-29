@@ -80,6 +80,8 @@ li {
 
 h1 {
   margin-bottom: 45px;
+  display: flex;
+  align-items: center;
 }
 
 h1 span {
@@ -137,4 +139,28 @@ th, td {
 
 .specialRules .remove {
   transform: translate(0, 8px);
+}
+
+.downloadRules {
+  margin-left: 30px;
+  margin-top: 3px;
+}
+
+.uploadRules input {
+  visibility: hidden;
+}
+
+.uploadRules button:hover {
+  color: rgb(254, 119, 9);
+  border-color: rgb(254, 119, 9);
+}
+
+.uploadRules {
+  margin-bottom: 0 !important;
+}
+
+h1 button {
+  border-right: 0;
+  border-top: 0;
+  border-left: 0;
 }

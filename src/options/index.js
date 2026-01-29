@@ -1,12 +1,20 @@
 const browser = require('webextension-polyfill');
 
 import State from '../shared/state';
-import { createSafeFolderName, removeForbiddenCharacters } from '../shared/helpers';
-import { createElement, createSelect, emptyNode, hasClass, setupEventHandler } from '../shared/markup';
+import { createSafeFolderName } from '../shared/helpers';
+import {
+  createElement,
+  createSelect,
+  emptyNode,
+  hasClass,
+  setupEventHandler,
+  downloadFile,
+} from "../shared/markup";
 
 const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
 const FOLDERS_LIST = document.querySelector('.saveFoldersList');
 const SPECIAL_RULES_LIST = document.querySelector('.specialRulesList');
+const UPLOAD_RULES_INPUT = document.querySelector(".uploadRulesInput");
 
 const RULES_KEYS = ['url', 'thumbImg', 'image', 'naming', 'folder'];
 const NAMING_OPTIONS = ['Title', 'URL'];
@@ -16,6 +24,9 @@ function init () {
   setupEventHandler(SPECIAL_RULES_LIST, 'click', handleSpecialRules);
   setupEventHandler('.addNew', 'click', saveNewFolder);
   setupEventHandler(".saveRulesButton", "click", saveSpecialRules);
+  setupEventHandler(".downloadRules", "click", downloadSpecialRules);
+  setupEventHandler(".uploadRulesButton", "click", () => UPLOAD_RULES_INPUT.click());
+  setupEventHandler(UPLOAD_RULES_INPUT, "change", uploadSpecialRules);
 
   browser.storage.onChanged.addListener(onStorageChange);
 
@@ -174,6 +185,33 @@ function saveSpecialRules () {
   }
 
   browser.storage.local.set({ specialRules: newSpecialRules });
+
+  return newSpecialRules;
+}
+
+function downloadSpecialRules () {
+  const newSpecialRules = saveSpecialRules();
+
+  const text = newSpecialRules.reduce(
+    (a, str) => a + str.join("\t") + "\n",
+    "",
+  );
+
+  downloadFile(text, "text/plain", "Save on Click Rules.txt");
+}
+
+function uploadSpecialRules (e) {
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    const specialRules = reader.result.split("\n").map((str) => str.split("\t"));
+    specialRules.pop();
+    browser.storage.local.set({ specialRules });
+  });
+
+  if (e.target.files.length) {
+    const text = e.target.files[0];
+    reader.readAsText(text);
+  }
 }
 
 function onStorageChange (changes) {

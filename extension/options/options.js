@@ -1217,6 +1217,7 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 const NEW_FOLDER_INPUT = document.querySelector('.newFolder');
 const FOLDERS_LIST = document.querySelector('.saveFoldersList');
 const SPECIAL_RULES_LIST = document.querySelector('.specialRulesList');
+const UPLOAD_RULES_INPUT = document.querySelector(".uploadRulesInput");
 
 const RULES_KEYS = ['url', 'thumbImg', 'image', 'naming', 'folder'];
 const NAMING_OPTIONS = ['Title', 'URL'];
@@ -1226,6 +1227,9 @@ function init () {
   (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(SPECIAL_RULES_LIST, 'click', handleSpecialRules);
   (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)('.addNew', 'click', saveNewFolder);
   (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(".saveRulesButton", "click", saveSpecialRules);
+  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(".downloadRules", "click", downloadSpecialRules);
+  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(".uploadRulesButton", "click", () => UPLOAD_RULES_INPUT.click());
+  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(UPLOAD_RULES_INPUT, "change", uploadSpecialRules);
 
   browser.storage.onChanged.addListener(onStorageChange);
 
@@ -1384,6 +1388,33 @@ function saveSpecialRules () {
   }
 
   browser.storage.local.set({ specialRules: newSpecialRules });
+
+  return newSpecialRules;
+}
+
+function downloadSpecialRules () {
+  const newSpecialRules = saveSpecialRules();
+
+  const text = newSpecialRules.reduce(
+    (a, str) => a + str.join("\t") + "\n",
+    "",
+  );
+
+  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.downloadFile)(text, "text/plain", "Save on Click Rules.txt");
+}
+
+function uploadSpecialRules (e) {
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    const specialRules = reader.result.split("\n").map((str) => str.split("\t"));
+    specialRules.pop();
+    browser.storage.local.set({ specialRules });
+  });
+
+  if (e.target.files.length) {
+    const text = e.target.files[0];
+    reader.readAsText(text);
+  }
 }
 
 function onStorageChange (changes) {
@@ -1497,6 +1528,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   createElement: () => (/* binding */ createElement),
 /* harmony export */   createSelect: () => (/* binding */ createSelect),
+/* harmony export */   downloadFile: () => (/* binding */ downloadFile),
 /* harmony export */   emptyNode: () => (/* binding */ emptyNode),
 /* harmony export */   hasClass: () => (/* binding */ hasClass),
 /* harmony export */   setupEventHandler: () => (/* binding */ setupEventHandler)
@@ -1556,6 +1588,18 @@ function hasClass (el, className) {
   return el.classList.contains(className);
 }
 
+function downloadFile (content, type, filename) {
+  const file = new Blob([content], { type });
+  const href = URL.createObjectURL(file);
+
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(href);
+}
 
 /***/ }),
 

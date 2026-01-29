@@ -52,3 +52,16 @@ export function emptyNode(node) {
 export function hasClass (el, className) {
   return el.classList.contains(className);
 }
+
+export function downloadFile (content, type, filename) {
+  const file = new Blob([content], { type });
+  const href = URL.createObjectURL(file);
+
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(href);
+}
