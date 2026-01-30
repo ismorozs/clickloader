@@ -1,3 +1,5 @@
+export const EXTENSION_NAME = "clickloader";
+
 export const MESSAGES = {
   SAVE_CONTENT: "SAVE_CONTENT",
   GET_PICTURE_URLS: "GET_PICTURE_URLS",

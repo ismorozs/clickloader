@@ -1,25 +1,20 @@
 const browser = require("webextension-polyfill/dist/browser-polyfill.min");
 const JSZip = require("jszip");
 
-import { EXTRACTION_REASON, MESSAGES, MAX_FILE_NAME } from "../shared/consts";
+import { setupDownloadPopup } from "../page/download-popup";
+import { EXTRACTION_REASON, MESSAGES } from "../shared/consts";
 import { createElement, emptyNode, hasClass, setupEventHandler } from "../shared/markup";
 import { extractExtension, isMediaResource, isVideo, selectImageName } from "../shared/helpers";
 
 const PAGE_TITLE = document.querySelector(".pageTitle");
 const PAGE_URL = document.querySelector(".pageUrl");
 const IMAGES_COUNT = document.querySelector('.totalCount');
-const DOWNLOAD_ALL_BUTTONS = document.querySelector('.downloadAllButtons');
 const DOWNLOAD_ALL = document.querySelector('.downloadAll');
 const DOWNLOAD_ALL_AS_ARCHIVE = document.querySelector('.downloadAllAsArchive');
 const IMAGES = document.querySelector(".images");
 const LAYOVER = document.querySelector(".layover");
 const BIG_IMAGE = document.querySelector(".bigImage");
 const POPUP_CONTAINER = document.querySelector(".popupContainer");
-const DOWNLOAD_PROGRESS = document.querySelector(".downloadProgress");
-const DOWNLOAD_LEFT = document.querySelector(".downloadLeft");
-const DOWNLOADING_FILE = document.querySelector(".downloadingFile");
-const TOTAL_DOWNLOAD_COUNT = document.querySelector(".totalDownloadCount");
-const STOP_DOWNLOADING_BUTTON = document.querySelector(".stopDownloading");
 const NO_THUMB_WARNING = document.querySelector('.noThumbWarning');
 const NO_IMAGE_WARNING = document.querySelector('.noImageWarning');
 const ORIGINAL_IMAGE_URL = document.querySelector('.originalImageUrl');
@@ -64,7 +59,6 @@ setupEventHandler(BIG_IMAGE, "click", switchLayover);
 setupEventHandler(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
 setupEventHandler(DOWNLOAD_ALL, "click", downloadAllImages);
 setupEventHandler(DOWNLOAD_ALL_AS_ARCHIVE, "click", prepareDownloadAllAsArchive);
-setupEventHandler(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
 setupEventHandler(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
 setupEventHandler(OPEN_SETTINGS_BUTTON, "click", openSettings);
 setupEventHandler(window, 'beforeunload', stopDownloading);
@@ -78,7 +72,6 @@ function buildPage (message) {
   PAGE_TITLE.textContent = title;
   PAGE_URL.textContent = href;
   IMAGES_COUNT.textContent = message.urls.length;
-  TOTAL_DOWNLOAD_COUNT.textContent = `/${message.urls.length}`;
 
   if (isNoThumbs) {
     NO_THUMB_WARNING.classList.add("show");
@@ -122,11 +115,11 @@ function handleImage (e) {
 }
 
 async function downloadImage (e) {
-  const { specialRule } = window.__PAGE_DATA;
+  const { specialRule, origin } = window.__PAGE_DATA;
   const { href, thumbUrl, title  } = e.target.dataset;
   const { isPreloaded, originalHref } = getPictureData(thumbUrl);
 
-  if (originalHref && !isMediaResource(originalHref, specialRule[0]) && isPreloaded) {
+  if (originalHref && !isMediaResource(originalHref, specialRule[0] || origin) && isPreloaded) {
     switchLayover();
     onShowingOriginalError(originalHref, thumbUrl);
     return;
@@ -169,9 +162,7 @@ async function showOriginal(e) {
 async function downloadAllImages () {
   const { title, href, urls, tabId } = window.__PAGE_DATA;
 
-  TOTAL_DOWNLOAD_COUNT.classList.add("show");
-  DOWNLOAD_LEFT.textContent = 0;
-  switchDownloadPanel();
+  window.__PAGE_DATA.popup = setupDownloadPopup(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
     type: MESSAGES.SAVE_ALL_CONTENT_RAW,
@@ -197,10 +188,10 @@ function updateOriginalUrl (message) {
 }
 
 function updateBigPicture (originalUrl, thumbUrl) {
-  const { specialRule } = window.__PAGE_DATA;
+  const { specialRule, origin } = window.__PAGE_DATA;
   BIG_IMAGE.style.maxHeight = `${window.innerHeight}px`;
   BIG_IMAGE.src =
-    originalUrl && isMediaResource(originalUrl, specialRule[0])
+    originalUrl && isMediaResource(originalUrl, specialRule[0] || origin)
       ? originalUrl
       : thumbUrl;
 }
@@ -212,24 +203,13 @@ function getPictureData (thumbUrl) {
 }
 
 function updateTotalDownloadCount ({ count, filename }) {
+  const { update } = window.__PAGE_DATA.popup;
+
+  update(count, filename);
+
   if (!count) {
-    switchDownloadPanel();
-    return;
+    window.__PAGE_DATA.popup = null;
   }
-
-  if (count) {
-    DOWNLOAD_LEFT.textContent = count;
-  }
-
-  if (filename) {
-    DOWNLOADING_FILE.textContent = filename;
-  }
-}
-
-function switchDownloadPanel () {
-  DOWNLOAD_ALL_BUTTONS.classList.toggle("show");
-  STOP_DOWNLOADING_BUTTON.classList.toggle("show");
-  DOWNLOAD_PROGRESS.classList.toggle("show");
 }
 
 function stopDownloading () {
@@ -242,7 +222,7 @@ function stopDownloading () {
 async function prepareDownloadAllAsArchive () {
   const { title, href, urls, tabId } = window.__PAGE_DATA;
 
-  switchDownloadPanel();
+  window.__PAGE_DATA.popup = setupDownloadPopup(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
     type: MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY,
@@ -255,7 +235,7 @@ async function prepareDownloadAllAsArchive () {
 
 async function downloadAllAsArchive (message) {
   const zip = new JSZip();
-  const { urls, href, title, naming, specialRule } = window.__PAGE_DATA;
+  const { urls, href, origin, title, naming, specialRule } = window.__PAGE_DATA;
   const [S_ORIGIN,,,S_NAMING] = specialRule;
 
   window.__PAGE_DATA.isDownloading = true;
@@ -278,7 +258,7 @@ async function downloadAllAsArchive (message) {
     const { thumbUrl, originalHref, originalUrl, originalTitle } = pictureData;
 
     try {
-      const downloadUrl = originalUrl && isMediaResource(originalUrl, S_ORIGIN) ? originalUrl : thumbUrl;
+      const downloadUrl = originalUrl && isMediaResource(originalUrl, S_ORIGIN || origin) ? originalUrl : thumbUrl;
       updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
       const file = await fetch(downloadUrl).then((res) => res.blob());
       const extension = extractExtension(downloadUrl);

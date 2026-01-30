@@ -39,6 +39,7 @@ async function getAllThumbsAndOriginalHrefs ({ specialRules }) {
     type: MESSAGES.RECEIVE_IMAGES_URLS,
     title: document.title,
     href: document.location.href,
+    origin: document.location.origin,
     urls,
   });
 

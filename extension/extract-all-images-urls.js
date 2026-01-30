@@ -1507,12 +1507,15 @@ function openSettings() {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ERRORS: () => (/* binding */ ERRORS),
+/* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
 /* harmony export */   IMAGES_GALLERY_URL: () => (/* binding */ IMAGES_GALLERY_URL),
 /* harmony export */   MAX_FILE_NAME: () => (/* binding */ MAX_FILE_NAME),
 /* harmony export */   MESSAGES: () => (/* binding */ MESSAGES),
 /* harmony export */   SCRIPTS: () => (/* binding */ SCRIPTS)
 /* harmony export */ });
+const EXTENSION_NAME = "clickloader";
+
 const MESSAGES = {
   SAVE_CONTENT: "SAVE_CONTENT",
   GET_PICTURE_URLS: "GET_PICTURE_URLS",
@@ -1885,6 +1888,7 @@ async function getAllThumbsAndOriginalHrefs ({ specialRules }) {
     type: MESSAGES.RECEIVE_IMAGES_URLS,
     title: document.title,
     href: document.location.href,
+    origin: document.location.origin,
     urls,
   });
 

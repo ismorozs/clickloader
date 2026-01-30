@@ -1239,6 +1239,192 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
+/***/ "./src/page/download-popup.js":
+/*!************************************!*\
+  !*** ./src/page/download-popup.js ***!
+  \************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   setupDownloadPopup: () => (/* binding */ setupDownloadPopup)
+/* harmony export */ });
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _shared_markup__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/markup */ "./src/shared/markup.js");
+const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyfill.min */ "./node_modules/webextension-polyfill/dist/browser-polyfill.min.js");
+
+
+
+
+const CLASSES = {
+  ANIMATION: "ANIMATION",
+  CONTAINER: "CONTAINER",
+  STOP_BUTTON: "STOP_BUTTON",
+  PROGRESS_CONTAINER: "PROGRESS_CONTAINER",
+  DOWNLOADING_FILE: "DOWNLOADING_FILE",
+  PROGRESS_SPINNER: "PROGRESS_SPINER",
+  DOWNLOAD_LEFT: "DOWNLOAD_LEFT",
+  DOWNLOAD_TOTAL: "DOWNLOAD_TOTAL",
+};
+
+function setupDownloadPopup(totalCount) {
+  const uid = Date.now();
+
+  const container = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", [
+    prefixClassName(uid, CLASSES.CONTAINER),
+  ]);
+  const stopDownloadingButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("button", "Stop", [
+    prefixClassName(uid, CLASSES.STOP_BUTTON),
+  ]);
+  stopDownloadingButton.onclick = stopDownloading;
+  const progressContainer = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", [
+    prefixClassName(uid, CLASSES.PROGRESS_CONTAINER),
+  ]);
+  const downloadingFile = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("p", "asdfasfdsafsdfsadfsdafsdafsdfasdfsdafsdf.jpg", [
+    prefixClassName(uid, CLASSES.DOWNLOADING_FILE),
+  ]);
+  const progressSpinner = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", [
+    prefixClassName(uid, CLASSES.PROGRESS_SPINNER),
+  ]);
+  const progressNumbers = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "");
+  const downloadLeft = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("span", 10, [
+    prefixClassName(uid, CLASSES.DOWNLOAD_LEFT),
+  ]);
+  const downloadTotal = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("span", ` / ${totalCount}`, [
+    prefixClassName(uid, CLASSES.DOWNLOAD_TOTAL),
+  ]);
+
+  progressNumbers.appendChild(downloadLeft);
+  progressNumbers.appendChild(downloadTotal);
+
+  progressContainer.appendChild(downloadingFile);
+  progressContainer.appendChild(progressSpinner);
+  progressContainer.appendChild(progressNumbers);
+
+  container.appendChild(stopDownloadingButton);
+  container.appendChild(progressContainer);
+
+  const styles = createStyles(uid);
+
+  function stopDownloading() {
+    browser.runtime.sendMessage({
+      type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.STOP_DOWNLOADING
+    });
+    removePopup(container, styles);
+  }
+
+  function updatePopup (count, filename) {
+    if (count) {
+      setText(downloadLeft, count);
+    }
+
+    if (filename) {
+      setText(downloadingFile, filename);
+    }
+
+    if (count === 0) {
+      removePopup();
+    }
+  }
+
+  function removePopup() {
+    document.body.removeChild(container);
+    document.body.removeChild(styles);
+  }
+
+  document.body.appendChild(styles);
+  document.body.appendChild(container);
+
+  return {
+    update: updatePopup,
+  };
+}
+
+function setText(domNode, text) {
+  domNode.textContent = text;
+}
+
+function prefixClassName(uid, className) {
+  return `${_shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTENSION_NAME}${uid}${className}`;
+}
+
+function createStyles(uid) {
+  const styles = document.createElement("style");
+  styles.textContent = `
+    @keyframes ${prefixClassName(uid, CLASSES.ANIMATION)} {
+      to{
+        transform: rotate(1turn)
+      }
+    }
+
+    .${prefixClassName(uid, CLASSES.CONTAINER)} {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      padding: 20px;
+      padding-bottom: 10px;
+      gap: 5px;
+      border-radius: 20px;
+      border: 5px solid rgb(254, 119, 9);
+    }
+
+    .${prefixClassName(uid, CLASSES.STOP_BUTTON)} {
+      display: inline-block;
+      text-align: center;
+      background: none;
+      font-size: 20px;
+      min-width: 68px;
+      box-sizing: border-box;
+      padding: 10px 18px;
+      vertical-align: bottom;
+      width: 250px;
+      align-self: end;
+      background-color: white;
+    }
+
+    .${prefixClassName(uid, CLASSES.STOP_BUTTON)}:hover {
+      border-color: #dc0000;
+      color: #dc0000;
+    }
+
+    .${prefixClassName(uid, CLASSES.PROGRESS_CONTAINER)} {
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-right: 3px;
+      gap: 15px;
+    }
+
+    .${prefixClassName(uid, CLASSES.PROGRESS_SPINNER)} {
+      margin-top: 5px;
+      width: 20px;
+      padding: 8px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgb(254, 119, 9);
+      --_m: 
+        conic-gradient(#0000 10%,#000),
+        linear-gradient(#000 0 0) content-box;
+      -webkit-mask: var(--_m);
+              mask: var(--_m);
+      -webkit-mask-composite: source-out;
+              mask-composite: subtract;
+      animation: ${prefixClassName(uid, CLASSES.ANIMATION)} 1.5s infinite linear;
+    }
+  `;
+
+  return styles;
+}
+
+
+/***/ }),
+
 /***/ "./src/shared/consts.js":
 /*!******************************!*\
   !*** ./src/shared/consts.js ***!
@@ -1249,12 +1435,15 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   ERRORS: () => (/* binding */ ERRORS),
+/* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
 /* harmony export */   IMAGES_GALLERY_URL: () => (/* binding */ IMAGES_GALLERY_URL),
 /* harmony export */   MAX_FILE_NAME: () => (/* binding */ MAX_FILE_NAME),
 /* harmony export */   MESSAGES: () => (/* binding */ MESSAGES),
 /* harmony export */   SCRIPTS: () => (/* binding */ SCRIPTS)
 /* harmony export */ });
+const EXTENSION_NAME = "clickloader";
+
 const MESSAGES = {
   SAVE_CONTENT: "SAVE_CONTENT",
   GET_PICTURE_URLS: "GET_PICTURE_URLS",
@@ -1557,11 +1746,13 @@ var __webpack_exports__ = {};
   !*** ./src/images-gallery/images-gallery.js ***!
   \**********************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
-/* harmony import */ var _shared_markup__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/markup */ "./src/shared/markup.js");
-/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
+/* harmony import */ var _page_download_popup__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../page/download-popup */ "./src/page/download-popup.js");
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _shared_markup__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../shared/markup */ "./src/shared/markup.js");
+/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
 const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyfill.min */ "./node_modules/webextension-polyfill/dist/browser-polyfill.min.js");
 const JSZip = __webpack_require__(/*! jszip */ "./node_modules/jszip/dist/jszip.min.js");
+
 
 
 
@@ -1570,18 +1761,12 @@ const JSZip = __webpack_require__(/*! jszip */ "./node_modules/jszip/dist/jszip.
 const PAGE_TITLE = document.querySelector(".pageTitle");
 const PAGE_URL = document.querySelector(".pageUrl");
 const IMAGES_COUNT = document.querySelector('.totalCount');
-const DOWNLOAD_ALL_BUTTONS = document.querySelector('.downloadAllButtons');
 const DOWNLOAD_ALL = document.querySelector('.downloadAll');
 const DOWNLOAD_ALL_AS_ARCHIVE = document.querySelector('.downloadAllAsArchive');
 const IMAGES = document.querySelector(".images");
 const LAYOVER = document.querySelector(".layover");
 const BIG_IMAGE = document.querySelector(".bigImage");
 const POPUP_CONTAINER = document.querySelector(".popupContainer");
-const DOWNLOAD_PROGRESS = document.querySelector(".downloadProgress");
-const DOWNLOAD_LEFT = document.querySelector(".downloadLeft");
-const DOWNLOADING_FILE = document.querySelector(".downloadingFile");
-const TOTAL_DOWNLOAD_COUNT = document.querySelector(".totalDownloadCount");
-const STOP_DOWNLOADING_BUTTON = document.querySelector(".stopDownloading");
 const NO_THUMB_WARNING = document.querySelector('.noThumbWarning');
 const NO_IMAGE_WARNING = document.querySelector('.noImageWarning');
 const ORIGINAL_IMAGE_URL = document.querySelector('.originalImageUrl');
@@ -1598,49 +1783,47 @@ const DOWNLOAD_INFO_HEADRERS = [
 ];
 
 browser.runtime.sendMessage({
-  type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.IMAGES_GALLERY_COMPLETED,
+  type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.IMAGES_GALLERY_COMPLETED,
 });
 
 browser.runtime.onMessage.addListener(onMessage);
 
 function onMessage(message) {
   switch (message.type) {
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_IMAGES_URLS:
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_IMAGES_URLS:
       buildPage(message);
       break;
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL:
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL:
       updateOriginalUrl(message);
       break;
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_DOWNLOADING_PROGRESS:
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_DOWNLOADING_PROGRESS:
       updateTotalDownloadCount(message);
       break;
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS:
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS:
       downloadAllAsArchive(message);
       break;
   }
 }
 
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(IMAGES, "click", handleImage);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(LAYOVER, "click", switchLayover);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(BIG_IMAGE, "click", switchLayover);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(DOWNLOAD_ALL, "click", downloadAllImages);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(DOWNLOAD_ALL_AS_ARCHIVE, "click", prepareDownloadAllAsArchive);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(STOP_DOWNLOADING_BUTTON, "click", stopDownloading);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(OPEN_SETTINGS_BUTTON, "click", openSettings);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setupEventHandler)(window, 'beforeunload', stopDownloading);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(IMAGES, "click", handleImage);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(LAYOVER, "click", switchLayover);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(BIG_IMAGE, "click", switchLayover);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(BIG_IMAGE, "load", () => BIG_IMAGE.classList.add("show"));
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(DOWNLOAD_ALL, "click", downloadAllImages);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(DOWNLOAD_ALL_AS_ARCHIVE, "click", prepareDownloadAllAsArchive);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(OPEN_SETTINGS_BUTTON, "click", openSettings);
+(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(window, 'beforeunload', stopDownloading);
 
 function buildPage (message) {
   window.__PAGE_DATA = message;
   NO_THUMB_WARNING.classList.remove("show");
-  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.emptyNode)(IMAGES);
+  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.emptyNode)(IMAGES);
   const { title, href, urls, isNoThumbs } = message;
   document.title = `All images for ${title}`;
   PAGE_TITLE.textContent = title;
   PAGE_URL.textContent = href;
   IMAGES_COUNT.textContent = message.urls.length;
-  TOTAL_DOWNLOAD_COUNT.textContent = `/${message.urls.length}`;
 
   if (isNoThumbs) {
     NO_THUMB_WARNING.classList.add("show");
@@ -1648,15 +1831,15 @@ function buildPage (message) {
   }
 
   urls.forEach(({ thumbUrl, originalHref }) => {
-    const card = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", ["card"]);
-    const img = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("img", thumbUrl, ["image"]);
+    const card = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)("div", "", ["card"]);
+    const img = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)("img", thumbUrl, ["image"]);
     img.dataset.originalHref = originalHref;
 
-    if (originalHref && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isVideo)(originalHref)) {
+    if (originalHref && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.isVideo)(originalHref)) {
       img.classList.add("video");
     }
 
-    const downloadButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("button", "", ["download"]);
+    const downloadButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.createElement)("button", "", ["download"]);
     downloadButton.title = "Download";
     downloadButton.dataset.originalHref = originalHref;
     downloadButton.dataset.title = message.title;
@@ -1672,36 +1855,36 @@ function buildPage (message) {
 function handleImage (e) {
   e.stopPropagation();
 
-  if ((0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.hasClass)(e.target, "download")) {
+  if ((0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.hasClass)(e.target, "download")) {
     downloadImage(e);
     return;
   }
 
-  if ((0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.hasClass)(e.target, "image")) {
+  if ((0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.hasClass)(e.target, "image")) {
     showOriginal(e);
     return;
   }
 }
 
 async function downloadImage (e) {
-  const { specialRule } = window.__PAGE_DATA;
+  const { specialRule, origin } = window.__PAGE_DATA;
   const { href, thumbUrl, title  } = e.target.dataset;
   const { isPreloaded, originalHref } = getPictureData(thumbUrl);
 
-  if (originalHref && !(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isMediaResource)(originalHref, specialRule[0]) && isPreloaded) {
+  if (originalHref && !(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.isMediaResource)(originalHref, specialRule[0] || origin) && isPreloaded) {
     switchLayover();
     onShowingOriginalError(originalHref, thumbUrl);
     return;
   }
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_URL,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_ORIGINAL_URL,
     title,
     originalHref,
     href,
     thumbUrl,
     isFromGallery: true,
-    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.DOWNLOAD,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.DOWNLOAD,
   });
 }
 
@@ -1718,25 +1901,23 @@ async function showOriginal(e) {
   }
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.GET_IMAGE_URL_FOR_GALLERY,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.GET_IMAGE_URL_FOR_GALLERY,
     galleryTabId: tabId,
     title,
     originalHref,
     href,
     thumbUrl,
-    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.GET_ORIGINAL_URL,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.GET_ORIGINAL_URL,
   });
 }
 
 async function downloadAllImages () {
   const { title, href, urls, tabId } = window.__PAGE_DATA;
 
-  TOTAL_DOWNLOAD_COUNT.classList.add("show");
-  DOWNLOAD_LEFT.textContent = 0;
-  switchDownloadPanel();
+  window.__PAGE_DATA.popup = (0,_page_download_popup__WEBPACK_IMPORTED_MODULE_0__.setupDownloadPopup)(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.SAVE_ALL_CONTENT_RAW,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.SAVE_ALL_CONTENT_RAW,
     title,
     href,
     urls,
@@ -1759,10 +1940,10 @@ function updateOriginalUrl (message) {
 }
 
 function updateBigPicture (originalUrl, thumbUrl) {
-  const { specialRule } = window.__PAGE_DATA;
+  const { specialRule, origin } = window.__PAGE_DATA;
   BIG_IMAGE.style.maxHeight = `${window.innerHeight}px`;
   BIG_IMAGE.src =
-    originalUrl && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isMediaResource)(originalUrl, specialRule[0])
+    originalUrl && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.isMediaResource)(originalUrl, specialRule[0] || origin)
       ? originalUrl
       : thumbUrl;
 }
@@ -1774,29 +1955,18 @@ function getPictureData (thumbUrl) {
 }
 
 function updateTotalDownloadCount ({ count, filename }) {
+  const { update } = window.__PAGE_DATA.popup;
+
+  update(count, filename);
+
   if (!count) {
-    switchDownloadPanel();
-    return;
+    window.__PAGE_DATA.popup = null;
   }
-
-  if (count) {
-    DOWNLOAD_LEFT.textContent = count;
-  }
-
-  if (filename) {
-    DOWNLOADING_FILE.textContent = filename;
-  }
-}
-
-function switchDownloadPanel () {
-  DOWNLOAD_ALL_BUTTONS.classList.toggle("show");
-  STOP_DOWNLOADING_BUTTON.classList.toggle("show");
-  DOWNLOAD_PROGRESS.classList.toggle("show");
 }
 
 function stopDownloading () {
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.STOP_DOWNLOADING
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.STOP_DOWNLOADING
   });
   window.__PAGE_DATA.isDownloading = false;
 }
@@ -1804,10 +1974,10 @@ function stopDownloading () {
 async function prepareDownloadAllAsArchive () {
   const { title, href, urls, tabId } = window.__PAGE_DATA;
 
-  switchDownloadPanel();
+  window.__PAGE_DATA.popup = (0,_page_download_popup__WEBPACK_IMPORTED_MODULE_0__.setupDownloadPopup)(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY,
     title,
     href,
     urls,
@@ -1817,7 +1987,7 @@ async function prepareDownloadAllAsArchive () {
 
 async function downloadAllAsArchive (message) {
   const zip = new JSZip();
-  const { urls, href, title, naming, specialRule } = window.__PAGE_DATA;
+  const { urls, href, origin, title, naming, specialRule } = window.__PAGE_DATA;
   const [S_ORIGIN,,,S_NAMING] = specialRule;
 
   window.__PAGE_DATA.isDownloading = true;
@@ -1840,12 +2010,12 @@ async function downloadAllAsArchive (message) {
     const { thumbUrl, originalHref, originalUrl, originalTitle } = pictureData;
 
     try {
-      const downloadUrl = originalUrl && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.isMediaResource)(originalUrl, S_ORIGIN) ? originalUrl : thumbUrl;
+      const downloadUrl = originalUrl && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.isMediaResource)(originalUrl, S_ORIGIN || origin) ? originalUrl : thumbUrl;
       updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
       const file = await fetch(downloadUrl).then((res) => res.blob());
-      const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(downloadUrl);
+      const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.extractExtension)(downloadUrl);
       const fileNaming = S_NAMING || naming;
-      const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.selectImageName)(fileNaming, title, href, downloadUrl);
+      const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.selectImageName)(fileNaming, title, href, downloadUrl);
       const fileName = `${name}${fileNaming !== "Original" ? ` (${i + 1})` : ""}.${extension}`;
       zip.file(fileName, file);
       info +=
@@ -1885,16 +2055,16 @@ function downloadThumbnail (e) {
   const { title, href } = window.__PAGE_DATA;
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_URL,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_ORIGINAL_URL,
     title,
     href,
     thumbUrl: e.target.dataset.thumbUrl,
-    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.DOWNLOAD,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.DOWNLOAD,
   });
 }
 
 function openSettings () {
-  browser.runtime.sendMessage({ type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.OPEN_SETTINGS });
+  browser.runtime.sendMessage({ type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.OPEN_SETTINGS });
 }
 
 })();
