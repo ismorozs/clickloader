@@ -1220,7 +1220,7 @@ const SPECIAL_RULES_LIST = document.querySelector('.specialRulesList');
 const UPLOAD_RULES_INPUT = document.querySelector(".uploadRulesInput");
 
 const RULES_KEYS = ['url', 'thumbImg', 'image', 'naming', 'folder'];
-const NAMING_OPTIONS = ['Title', 'URL'];
+const NAMING_OPTIONS = ['Title', 'URL', 'Original'];
 
 function init () {
   (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(FOLDERS_LIST, 'click', handleFolder);
@@ -1433,6 +1433,62 @@ function onStorageChange (changes) {
 
 /***/ }),
 
+/***/ "./src/shared/consts.js":
+/*!******************************!*\
+  !*** ./src/shared/consts.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ERRORS: () => (/* binding */ ERRORS),
+/* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
+/* harmony export */   IMAGES_GALLERY_URL: () => (/* binding */ IMAGES_GALLERY_URL),
+/* harmony export */   MAX_FILE_NAME: () => (/* binding */ MAX_FILE_NAME),
+/* harmony export */   MESSAGES: () => (/* binding */ MESSAGES),
+/* harmony export */   SCRIPTS: () => (/* binding */ SCRIPTS)
+/* harmony export */ });
+const MESSAGES = {
+  SAVE_CONTENT: "SAVE_CONTENT",
+  GET_PICTURE_URLS: "GET_PICTURE_URLS",
+  RECEIVE_IMAGES_URLS: "RECEIVE_IMAGES_URLS",
+  IMAGES_GALLERY_COMPLETED: "IMAGES_GALLERY_COMPLETED",
+  SAVE_ALL_CONTENT_RAW: "SAVE_ALL_CONTENT_RAW",
+  GET_IMAGE_URL_FOR_GALLERY: "GET_IMAGE_URL_FOR_GALLERY",
+  RECEIVE_ORIGINAL_URL: "RECEIVE_ORIGINAL_URL",
+  RECEIVE_ORIGINAL_IMAGE_URL: "RECEIVE_ORIGINAL_IMAGE_URL",
+  RECEIVE_DOWNLOADING_PROGRESS: "RECEIVE_DOWNLOADING_PROGRESS",
+  STOP_DOWNLOADING: "STOP_DOWNLOADING",
+  GET_ALL_IMAGES_URLS_FOR_GALLERY: "GET_ALL_IMAGES_URLS_FOR_GALLERY",
+  RECEIVE_PRELOADED_IMAGES_URLS: "RECEIVE_PRELOADED_IMAGES_URLS",
+  OPEN_SETTINGS: "OPEN_SETTINGS",
+  ERROR: "ERROR",
+};
+
+const EXTRACTION_REASON = {
+  DOWNLOAD: "DOWNLOAD",
+  COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
+  GET_ORIGINAL_URL: "GET_ORIGINAL_URL",
+};
+
+const MAX_FILE_NAME = 100;
+
+const SCRIPTS = {
+  PAGE: "/page-script.js",
+  EXTRACT_ALL_IMAGES_URLS: "/extract-all-images-urls.js",
+  DOWNLOAD_ORIGINAL_IMAGE_URL: "/download-original-special-case.js",
+};
+
+const IMAGES_GALLERY_URL = "/images-gallery/index.html";
+
+const ERRORS = {
+  INVALID_URL: "Invalid URL",
+};
+
+
+/***/ }),
+
 /***/ "./src/shared/helpers.js":
 /*!*******************************!*\
   !*** ./src/shared/helpers.js ***!
@@ -1450,11 +1506,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
-/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters),
+/* harmony export */   selectImageName: () => (/* binding */ selectImageName)
 /* harmony export */ });
+/* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
-const MAX_NODE_TREE_ASCENTION = 3;
+
 
 function removeForbiddenCharacters (str) {
   const regexpStr = [
@@ -1512,6 +1570,20 @@ function createSafeFolderName (string) {
 
 function isMediaResource (url, domainName) {
   return domainName.length && url.slice(domainName.length).split(".")[1] || url.split(".").length > 3;
+}
+
+function extractOriginalFileName (url) {
+  return url.split("/").slice(-1)[0].split(".")[0];
+}
+
+function selectImageName(type, title, url, original) {
+  const name = type === "URL"
+    ? url
+    : type === "Original"
+      ? extractOriginalFileName(original)
+      : title;
+
+  return removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
 }
 
 
@@ -1621,6 +1693,7 @@ const EXTENSION_NAME = 'Save on Click';
 const DEFAULT_SETTINGS = {
   saveFolder: EXTENSION_NAME + '/',
   saveMethod: 'contextmenu',
+  saveNaming: 'Title',
   saveFolders: ['', EXTENSION_NAME + '/']
 };
 
@@ -1630,6 +1703,7 @@ const STATE = {
   saveFolders: [],
   saveFolder: "",
   saveMethod: "",
+  saveNaming: "",
   tryOriginal: false,
   savedOriginalUrls: [],
   specialRules: [
@@ -1642,6 +1716,7 @@ const contextMenuKeys = [
   "saveFolders",
   "saveFolder",
   "saveMethod",
+  "saveNaming",
   "tryOriginal",
   "galleryImagesTab",
   "galleryData",

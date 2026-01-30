@@ -1304,6 +1304,7 @@ async function sendImagesUrlsToGallery() {
     tabId: galleryTab.id,
     isSpecialRule,
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_2__.MESSAGES.RECEIVE_IMAGES_URLS,
+    naming: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(),
     isNoThumbs: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isNoThumbCase(),
     specialRule: (0,___WEBPACK_IMPORTED_MODULE_1__.getSpecialRule)(galleryData.href, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules()),
   });
@@ -1571,11 +1572,7 @@ async function saveContent(message) {
     /\/+/g,
     "/",
   );
-  const rawName = S_NAMING === "URL" ? href : title;
-  const handledName = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.removeForbiddenCharacters)(rawName, true).substring(
-    0,
-    _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MAX_FILE_NAME,
-  );
+
   const fileExtension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(
     originalUrl || thumbUrl,
   );
@@ -1590,13 +1587,14 @@ async function saveContent(message) {
     [downloadUrl, extension] = [originalUrl, fileExtension];
   }
 
-  const name = `${saveFolder}${handledName}.${extension}`;
+  const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.selectImageName)(S_NAMING || _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(), title, href, downloadUrl);
+  const fileName = `${saveFolder}${name}.${extension}`;
 
   try {
-    await download(downloadUrl, name);
+    await download(downloadUrl, fileName);
   } catch (e) {
     (0,_error__WEBPACK_IMPORTED_MODULE_3__.sendOriginalNotFoundError)(galleryTabId, originalHref);
-    await download(thumbUrl, name);
+    await download(thumbUrl, fileName);
   }
 }
 
@@ -1714,6 +1712,7 @@ const EVENT_MEANINGS = {
 };
 
 const TRY_ORIGINAL_STATES = ['Disabled', 'Download original'];
+const NAMING_STATES = ["Title", "URL", "Original"];
 
 const CONTEXT_MENU = {
   MAIN: { ID: 'MAIN', TITLE: (isActive, tryOriginal) => {
@@ -1724,8 +1723,9 @@ const CONTEXT_MENU = {
   FOLDER_SUBMENU: { ID: 'F', TITLE: (currentFolder) => 'Save folder: /' + currentFolder },
   MANAGE_FOLDERS: { ID: 'N', TITLE: 'Manage folders' },
   METHOD_SUBMENU: { ID: 'M', TITLE: (currentMethod) => 'Save method: ' + EVENT_MEANINGS[currentMethod] },
+  NAMING_SUBMENU: { ID: 'G', TITLE: (currentNaming) => `Save naming: ${currentNaming}` },
   TRY_DOWNLOAD_ORIGINAL: { ID: 'O', TITLE: (currentTryOriginal) => buildTryOriginalTitle(currentTryOriginal) },
-  SHOW_PICTURES_GALERY: { ID: 'G', TITLE: 'Show page pictures' },
+  SHOW_PICTURES_GALERY: { ID: 'P', TITLE: 'Show page pictures' },
   CUSTOMIZE: { ID: 'C', TITLE: 'Customize special rules' },
   SEPARATOR1: { ID: 'SEPARATOR1' },
   SEPARATOR2: { ID: 'SEPARATOR2' },
@@ -1737,7 +1737,7 @@ function buildTryOriginalTitle (currentTryOriginal) {
   return `Try download original ${currentTryOriginal ? '(+)' : ''}`;
 }
 
-function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, tryOriginal }) {
+function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, saveNaming, tryOriginal }) {
   browser.contextMenus.removeAll().then(() => {
     browser.contextMenus.create({ id: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.MAIN.TITLE(active, tryOriginal), contexts: ["all"] });
     browser.contextMenus.create({ id: CONTEXT_MENU.SWITCH.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.SWITCH.TITLE(active), contexts: ["all"] });
@@ -1746,6 +1746,7 @@ function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, tryOri
 
     setupFolderSubmenu(saveFolders, saveFolder);
     setupMethodSubmenu(saveMethod);
+    setupNamingSubmnenu(saveNaming);
 
     browser.contextMenus.create({
       id: CONTEXT_MENU.SEPARATOR1.ID,
@@ -1779,6 +1780,28 @@ function setupMethodSubmenu (currentSaveMethod) {
     const title = EVENT_MEANINGS[method];
     const isActive = method === currentSaveMethod;
     browser.contextMenus.create({ id: CONTEXT_MENU.METHOD_SUBMENU.ID + i, parentId: CONTEXT_MENU.METHOD_SUBMENU.ID, title, contexts: ["all"], type: 'radio', checked: isActive });
+  }); 
+}
+
+function setupNamingSubmnenu (currentNaming) {
+  browser.contextMenus.create({
+    id: CONTEXT_MENU.NAMING_SUBMENU.ID,
+    parentId: CONTEXT_MENU.MAIN.ID,
+    title: CONTEXT_MENU.NAMING_SUBMENU.TITLE(currentNaming),
+    contexts: ["all"],
+  });
+
+  NAMING_STATES.forEach((naming, i) => {
+
+    const isActive = naming === currentNaming;
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.NAMING_SUBMENU.ID + i,
+      parentId: CONTEXT_MENU.NAMING_SUBMENU.ID,
+      title: naming,
+      contexts: ["all"],
+      type: "radio",
+      checked: isActive,
+    });
   }); 
 }
 
@@ -1829,6 +1852,10 @@ function onContextMenuClicked (info) {
       changeSaveMethod(info.menuItemId[1]);
       return;
 
+    case CONTEXT_MENU.NAMING_SUBMENU.ID:
+      changeSaveNaming(info.menuItemId[1]);
+      break;
+
     case CONTEXT_MENU.MANAGE_FOLDERS.ID:
       (0,_actions__WEBPACK_IMPORTED_MODULE_1__.openSettings)();
       return;
@@ -1865,6 +1892,10 @@ function changeSaveMethod (methodIdx) {
   const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
   browser.storage.local.set({ saveMethod });
   (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), saveMethod);
+}
+
+function changeSaveNaming (methodIdx) {
+  browser.storage.local.set({ saveNaming: NAMING_STATES[methodIdx] });
 }
 
 async function openPagePictures () {
@@ -2085,11 +2116,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
-/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters),
+/* harmony export */   selectImageName: () => (/* binding */ selectImageName)
 /* harmony export */ });
+/* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
-const MAX_NODE_TREE_ASCENTION = 3;
+
 
 function removeForbiddenCharacters (str) {
   const regexpStr = [
@@ -2149,6 +2182,20 @@ function isMediaResource (url, domainName) {
   return domainName.length && url.slice(domainName.length).split(".")[1] || url.split(".").length > 3;
 }
 
+function extractOriginalFileName (url) {
+  return url.split("/").slice(-1)[0].split(".")[0];
+}
+
+function selectImageName(type, title, url, original) {
+  const name = type === "URL"
+    ? url
+    : type === "Original"
+      ? extractOriginalFileName(original)
+      : title;
+
+  return removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
+}
+
 
 /***/ }),
 
@@ -2170,6 +2217,7 @@ const EXTENSION_NAME = 'Save on Click';
 const DEFAULT_SETTINGS = {
   saveFolder: EXTENSION_NAME + '/',
   saveMethod: 'contextmenu',
+  saveNaming: 'Title',
   saveFolders: ['', EXTENSION_NAME + '/']
 };
 
@@ -2179,6 +2227,7 @@ const STATE = {
   saveFolders: [],
   saveFolder: "",
   saveMethod: "",
+  saveNaming: "",
   tryOriginal: false,
   savedOriginalUrls: [],
   specialRules: [
@@ -2191,6 +2240,7 @@ const contextMenuKeys = [
   "saveFolders",
   "saveFolder",
   "saveMethod",
+  "saveNaming",
   "tryOriginal",
   "galleryImagesTab",
   "galleryData",

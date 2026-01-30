@@ -54,6 +54,7 @@ export async function sendImagesUrlsToGallery() {
     tabId: galleryTab.id,
     isSpecialRule,
     type: MESSAGES.RECEIVE_IMAGES_URLS,
+    naming: State.saveNaming(),
     isNoThumbs: State.isNoThumbCase(),
     specialRule: getSpecialRule(galleryData.href, State.specialRules()),
   });

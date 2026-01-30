@@ -3,7 +3,7 @@ const JSZip = require("jszip");
 
 import { EXTRACTION_REASON, MESSAGES, MAX_FILE_NAME } from "../shared/consts";
 import { createElement, emptyNode, hasClass, setupEventHandler } from "../shared/markup";
-import { extractExtension, isMediaResource, isVideo, removeForbiddenCharacters } from "../shared/helpers";
+import { extractExtension, isMediaResource, isVideo, selectImageName } from "../shared/helpers";
 
 const PAGE_TITLE = document.querySelector(".pageTitle");
 const PAGE_URL = document.querySelector(".pageUrl");
@@ -255,7 +255,7 @@ async function prepareDownloadAllAsArchive () {
 
 async function downloadAllAsArchive (message) {
   const zip = new JSZip();
-  const { urls, href, title, specialRule } = window.__PAGE_DATA;
+  const { urls, href, title, naming, specialRule } = window.__PAGE_DATA;
   const [S_ORIGIN,,,S_NAMING] = specialRule;
 
   window.__PAGE_DATA.isDownloading = true;
@@ -282,12 +282,12 @@ async function downloadAllAsArchive (message) {
       updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
       const file = await fetch(downloadUrl).then((res) => res.blob());
       const extension = extractExtension(downloadUrl);
-      const shortTitle = title.substring(0, MAX_FILE_NAME);
-      const rawName = S_NAMING === "URL" ? href : shortTitle;
-      const name = `${removeForbiddenCharacters(rawName)} (${i + 1})`;
-      zip.file(`${name}.${extension}`, file);
+      const fileNaming = S_NAMING || naming;
+      const name = selectImageName(fileNaming, title, href, downloadUrl);
+      const fileName = `${name}${fileNaming !== "Original" ? ` (${i + 1})` : ""}.${extension}`;
+      zip.file(fileName, file);
       info +=
-        [shortTitle, href, thumbUrl, originalHref, originalUrl, originalTitle].join(
+        [name, href, thumbUrl, originalHref, originalUrl, originalTitle].join(
           "\t",
         ) + "\n";
     } catch (e) {

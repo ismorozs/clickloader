@@ -17,7 +17,7 @@ const SPECIAL_RULES_LIST = document.querySelector('.specialRulesList');
 const UPLOAD_RULES_INPUT = document.querySelector(".uploadRulesInput");
 
 const RULES_KEYS = ['url', 'thumbImg', 'image', 'naming', 'folder'];
-const NAMING_OPTIONS = ['Title', 'URL'];
+const NAMING_OPTIONS = ['Title', 'URL', 'Original'];
 
 function init () {
   setupEventHandler(FOLDERS_LIST, 'click', handleFolder);

@@ -11,6 +11,7 @@ const EVENT_MEANINGS = {
 };
 
 const TRY_ORIGINAL_STATES = ['Disabled', 'Download original'];
+const NAMING_STATES = ["Title", "URL", "Original"];
 
 const CONTEXT_MENU = {
   MAIN: { ID: 'MAIN', TITLE: (isActive, tryOriginal) => {
@@ -21,8 +22,9 @@ const CONTEXT_MENU = {
   FOLDER_SUBMENU: { ID: 'F', TITLE: (currentFolder) => 'Save folder: /' + currentFolder },
   MANAGE_FOLDERS: { ID: 'N', TITLE: 'Manage folders' },
   METHOD_SUBMENU: { ID: 'M', TITLE: (currentMethod) => 'Save method: ' + EVENT_MEANINGS[currentMethod] },
+  NAMING_SUBMENU: { ID: 'G', TITLE: (currentNaming) => `Save naming: ${currentNaming}` },
   TRY_DOWNLOAD_ORIGINAL: { ID: 'O', TITLE: (currentTryOriginal) => buildTryOriginalTitle(currentTryOriginal) },
-  SHOW_PICTURES_GALERY: { ID: 'G', TITLE: 'Show page pictures' },
+  SHOW_PICTURES_GALERY: { ID: 'P', TITLE: 'Show page pictures' },
   CUSTOMIZE: { ID: 'C', TITLE: 'Customize special rules' },
   SEPARATOR1: { ID: 'SEPARATOR1' },
   SEPARATOR2: { ID: 'SEPARATOR2' },
@@ -34,7 +36,7 @@ function buildTryOriginalTitle (currentTryOriginal) {
   return `Try download original ${currentTryOriginal ? '(+)' : ''}`;
 }
 
-export function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, tryOriginal }) {
+export function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, saveNaming, tryOriginal }) {
   browser.contextMenus.removeAll().then(() => {
     browser.contextMenus.create({ id: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.MAIN.TITLE(active, tryOriginal), contexts: ["all"] });
     browser.contextMenus.create({ id: CONTEXT_MENU.SWITCH.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.SWITCH.TITLE(active), contexts: ["all"] });
@@ -43,6 +45,7 @@ export function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod,
 
     setupFolderSubmenu(saveFolders, saveFolder);
     setupMethodSubmenu(saveMethod);
+    setupNamingSubmnenu(saveNaming);
 
     browser.contextMenus.create({
       id: CONTEXT_MENU.SEPARATOR1.ID,
@@ -76,6 +79,28 @@ function setupMethodSubmenu (currentSaveMethod) {
     const title = EVENT_MEANINGS[method];
     const isActive = method === currentSaveMethod;
     browser.contextMenus.create({ id: CONTEXT_MENU.METHOD_SUBMENU.ID + i, parentId: CONTEXT_MENU.METHOD_SUBMENU.ID, title, contexts: ["all"], type: 'radio', checked: isActive });
+  }); 
+}
+
+function setupNamingSubmnenu (currentNaming) {
+  browser.contextMenus.create({
+    id: CONTEXT_MENU.NAMING_SUBMENU.ID,
+    parentId: CONTEXT_MENU.MAIN.ID,
+    title: CONTEXT_MENU.NAMING_SUBMENU.TITLE(currentNaming),
+    contexts: ["all"],
+  });
+
+  NAMING_STATES.forEach((naming, i) => {
+
+    const isActive = naming === currentNaming;
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.NAMING_SUBMENU.ID + i,
+      parentId: CONTEXT_MENU.NAMING_SUBMENU.ID,
+      title: naming,
+      contexts: ["all"],
+      type: "radio",
+      checked: isActive,
+    });
   }); 
 }
 
@@ -126,6 +151,10 @@ export function onContextMenuClicked (info) {
       changeSaveMethod(info.menuItemId[1]);
       return;
 
+    case CONTEXT_MENU.NAMING_SUBMENU.ID:
+      changeSaveNaming(info.menuItemId[1]);
+      break;
+
     case CONTEXT_MENU.MANAGE_FOLDERS.ID:
       openSettings();
       return;
@@ -162,6 +191,10 @@ function changeSaveMethod (methodIdx) {
   const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
   browser.storage.local.set({ saveMethod });
   runUserScript(State.active(), saveMethod);
+}
+
+function changeSaveNaming (methodIdx) {
+  browser.storage.local.set({ saveNaming: NAMING_STATES[methodIdx] });
 }
 
 async function openPagePictures () {

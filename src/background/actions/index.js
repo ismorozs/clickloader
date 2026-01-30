@@ -3,16 +3,15 @@ const browser = require("webextension-polyfill");
 import State from "../../shared/state";
 import {
   MESSAGES,
-  MAX_FILE_NAME,
   SCRIPTS,
   EXTRACTION_REASON,
 } from "../../shared/consts";
 import {
+  selectImageName,
   executeScript,
   extractExtension,
   getCurrentTab,
   isHTTPUrl,
-  removeForbiddenCharacters,
 } from "../../shared/helpers";
 import { sendOriginalNotFoundError } from "./error";
 
@@ -115,11 +114,7 @@ export async function saveContent(message) {
     /\/+/g,
     "/",
   );
-  const rawName = S_NAMING === "URL" ? href : title;
-  const handledName = removeForbiddenCharacters(rawName, true).substring(
-    0,
-    MAX_FILE_NAME,
-  );
+
   const fileExtension = extractExtension(
     originalUrl || thumbUrl,
   );
@@ -134,13 +129,14 @@ export async function saveContent(message) {
     [downloadUrl, extension] = [originalUrl, fileExtension];
   }
 
-  const name = `${saveFolder}${handledName}.${extension}`;
+  const name = selectImageName(S_NAMING || State.saveNaming(), title, href, downloadUrl);
+  const fileName = `${saveFolder}${name}.${extension}`;
 
   try {
-    await download(downloadUrl, name);
+    await download(downloadUrl, fileName);
   } catch (e) {
     sendOriginalNotFoundError(galleryTabId, originalHref);
-    await download(thumbUrl, name);
+    await download(thumbUrl, fileName);
   }
 }
 

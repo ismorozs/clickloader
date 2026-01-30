@@ -1312,11 +1312,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
-/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters),
+/* harmony export */   selectImageName: () => (/* binding */ selectImageName)
 /* harmony export */ });
+/* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
-const MAX_NODE_TREE_ASCENTION = 3;
+
 
 function removeForbiddenCharacters (str) {
   const regexpStr = [
@@ -1374,6 +1376,20 @@ function createSafeFolderName (string) {
 
 function isMediaResource (url, domainName) {
   return domainName.length && url.slice(domainName.length).split(".")[1] || url.split(".").length > 3;
+}
+
+function extractOriginalFileName (url) {
+  return url.split("/").slice(-1)[0].split(".")[0];
+}
+
+function selectImageName(type, title, url, original) {
+  const name = type === "URL"
+    ? url
+    : type === "Original"
+      ? extractOriginalFileName(original)
+      : title;
+
+  return removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
 }
 
 
@@ -1801,7 +1817,7 @@ async function prepareDownloadAllAsArchive () {
 
 async function downloadAllAsArchive (message) {
   const zip = new JSZip();
-  const { urls, href, title, specialRule } = window.__PAGE_DATA;
+  const { urls, href, title, naming, specialRule } = window.__PAGE_DATA;
   const [S_ORIGIN,,,S_NAMING] = specialRule;
 
   window.__PAGE_DATA.isDownloading = true;
@@ -1828,12 +1844,12 @@ async function downloadAllAsArchive (message) {
       updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
       const file = await fetch(downloadUrl).then((res) => res.blob());
       const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(downloadUrl);
-      const shortTitle = title.substring(0, _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
-      const rawName = S_NAMING === "URL" ? href : shortTitle;
-      const name = `${(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.removeForbiddenCharacters)(rawName)} (${i + 1})`;
-      zip.file(`${name}.${extension}`, file);
+      const fileNaming = S_NAMING || naming;
+      const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.selectImageName)(fileNaming, title, href, downloadUrl);
+      const fileName = `${name}${fileNaming !== "Original" ? ` (${i + 1})` : ""}.${extension}`;
+      zip.file(fileName, file);
       info +=
-        [shortTitle, href, thumbUrl, originalHref, originalUrl, originalTitle].join(
+        [name, href, thumbUrl, originalHref, originalUrl, originalTitle].join(
           "\t",
         ) + "\n";
     } catch (e) {

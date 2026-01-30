@@ -1,6 +1,6 @@
 const browser = require('webextension-polyfill');
 
-const MAX_NODE_TREE_ASCENTION = 3;
+import { MAX_FILE_NAME } from "./consts";
 
 export function removeForbiddenCharacters (str) {
   const regexpStr = [
@@ -58,4 +58,18 @@ export function createSafeFolderName (string) {
 
 export function isMediaResource (url, domainName) {
   return domainName.length && url.slice(domainName.length).split(".")[1] || url.split(".").length > 3;
+}
+
+function extractOriginalFileName (url) {
+  return url.split("/").slice(-1)[0].split(".")[0];
+}
+
+export function selectImageName(type, title, url, original) {
+  const name = type === "URL"
+    ? url
+    : type === "Original"
+      ? extractOriginalFileName(original)
+      : title;
+
+  return removeForbiddenCharacters(name).substring(0, MAX_FILE_NAME);
 }

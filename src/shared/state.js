@@ -5,6 +5,7 @@ const EXTENSION_NAME = 'Save on Click';
 const DEFAULT_SETTINGS = {
   saveFolder: EXTENSION_NAME + '/',
   saveMethod: 'contextmenu',
+  saveNaming: 'Title',
   saveFolders: ['', EXTENSION_NAME + '/']
 };
 
@@ -14,6 +15,7 @@ const STATE = {
   saveFolders: [],
   saveFolder: "",
   saveMethod: "",
+  saveNaming: "",
   tryOriginal: false,
   savedOriginalUrls: [],
   specialRules: [
@@ -26,6 +28,7 @@ const contextMenuKeys = [
   "saveFolders",
   "saveFolder",
   "saveMethod",
+  "saveNaming",
   "tryOriginal",
   "galleryImagesTab",
   "galleryData",

@@ -1385,11 +1385,7 @@ async function saveContent(message) {
     /\/+/g,
     "/",
   );
-  const rawName = S_NAMING === "URL" ? href : title;
-  const handledName = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.removeForbiddenCharacters)(rawName, true).substring(
-    0,
-    _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MAX_FILE_NAME,
-  );
+
   const fileExtension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.extractExtension)(
     originalUrl || thumbUrl,
   );
@@ -1404,13 +1400,14 @@ async function saveContent(message) {
     [downloadUrl, extension] = [originalUrl, fileExtension];
   }
 
-  const name = `${saveFolder}${handledName}.${extension}`;
+  const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.selectImageName)(S_NAMING || _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(), title, href, downloadUrl);
+  const fileName = `${saveFolder}${name}.${extension}`;
 
   try {
-    await download(downloadUrl, name);
+    await download(downloadUrl, fileName);
   } catch (e) {
     (0,_error__WEBPACK_IMPORTED_MODULE_3__.sendOriginalNotFoundError)(galleryTabId, originalHref);
-    await download(thumbUrl, name);
+    await download(thumbUrl, fileName);
   }
 }
 
@@ -1669,11 +1666,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
-/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters),
+/* harmony export */   selectImageName: () => (/* binding */ selectImageName)
 /* harmony export */ });
+/* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
 
-const MAX_NODE_TREE_ASCENTION = 3;
+
 
 function removeForbiddenCharacters (str) {
   const regexpStr = [
@@ -1733,6 +1732,20 @@ function isMediaResource (url, domainName) {
   return domainName.length && url.slice(domainName.length).split(".")[1] || url.split(".").length > 3;
 }
 
+function extractOriginalFileName (url) {
+  return url.split("/").slice(-1)[0].split(".")[0];
+}
+
+function selectImageName(type, title, url, original) {
+  const name = type === "URL"
+    ? url
+    : type === "Original"
+      ? extractOriginalFileName(original)
+      : title;
+
+  return removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
+}
+
 
 /***/ }),
 
@@ -1754,6 +1767,7 @@ const EXTENSION_NAME = 'Save on Click';
 const DEFAULT_SETTINGS = {
   saveFolder: EXTENSION_NAME + '/',
   saveMethod: 'contextmenu',
+  saveNaming: 'Title',
   saveFolders: ['', EXTENSION_NAME + '/']
 };
 
@@ -1763,6 +1777,7 @@ const STATE = {
   saveFolders: [],
   saveFolder: "",
   saveMethod: "",
+  saveNaming: "",
   tryOriginal: false,
   savedOriginalUrls: [],
   specialRules: [
@@ -1775,6 +1790,7 @@ const contextMenuKeys = [
   "saveFolders",
   "saveFolder",
   "saveMethod",
+  "saveNaming",
   "tryOriginal",
   "galleryImagesTab",
   "galleryData",
