@@ -7,6 +7,8 @@ import {
   SCRIPTS,
   IMAGES_GALLERY_URL,
   EXTRACTION_REASON,
+  COLLECTING_REASON,
+  DOWNLOAD_STATUS,
 } from "../../shared/consts";
 import {
   executeScript,
@@ -14,12 +16,15 @@ import {
   isValidUrl,
 } from "../../shared/helpers";
 
-export async function prepareForGalleryPage() {
+export async function prepareForGalleryPage(reason) {
   const tab = await getCurrentTab();
   await executeScript(tab.id, SCRIPTS.EXTRACT_ALL_IMAGES_URLS);
   browser.tabs.sendMessage(tab.id, {
     type: MESSAGES.GET_PICTURE_URLS,
     specialRules: State.specialRules(),
+    naming: State.saveNaming(),
+    reason,
+    tabId: tab.id,
   });
 }
 
@@ -106,8 +111,25 @@ export async function saveOriginalUrl(message) {
       return;
     }
 
+    if (message.reason === COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE) {
+      saveAllOriginalImagesAsArchive();
+      return;
+    }
+
     sendOriginalUrlsToGallery();
   }
+}
+
+export async function saveAllOriginalImagesAsArchive() {
+  const tab = await getCurrentTab();
+  browser.tabs.sendMessage(tab.id, {
+    originalUrls: State.savedOriginalUrls(),
+    type: MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS,
+    naming: State.saveNaming(),
+    specialRule: getSpecialRule(tab.url, State.specialRules()),
+  });
+
+  State.savedOriginalUrls([]);
 }
 
 async function updateUrlsAndResendImagesToGallery() {
@@ -117,9 +139,12 @@ async function updateUrlsAndResendImagesToGallery() {
 }
 
 async function sendOriginalUrlsToGallery() {
+  const galleryTab = State.galleryImagesTab();
   browser.tabs.sendMessage(State.galleryImagesTab().id, {
     originalUrls: State.savedOriginalUrls(),
     type: MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS,
+    naming: State.saveNaming(),
+    specialRule: getSpecialRule(galleryTab.url, State.specialRules())
   });
 
   State.savedOriginalUrls([]);
@@ -131,18 +156,14 @@ export async function getOriginalImageUrlForPreview(message) {
     State.specialRules(),
   );
   getImageUrlFromNextPage({
-    title: message.title,
-    href: message.href,
-    thumbUrl: message.thumbUrl,
-    originalHref: message.originalHref,
+    ...message,
     imageSelector: S_ORIGINAL_SELECTOR,
     reason: EXTRACTION_REASON.GET_ORIGINAL_URL,
-    galleryTabId: message.galleryTabId,
   });
 }
 
-export async function sendOriginalImageUrlForPreview({ galleryTabId, originalHref, originalUrl }) {
-  browser.tabs.sendMessage(galleryTabId, {
+export async function sendOriginalImageUrlForPreview({ tabId, originalHref, originalUrl }) {
+  browser.tabs.sendMessage(tabId, {
     originalHref,
     originalUrl,
     type: MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL,
@@ -150,11 +171,11 @@ export async function sendOriginalImageUrlForPreview({ galleryTabId, originalHre
 }
 
 export async function collectAllOriginalImageUrls(message) {
-  const [,, S_ORIGINAL_SELECTOR] = getSpecialRule(message.href, State.specialRules());
   State.isDownloadingInProgress(true);
   State.savedOriginalUrls([]);
-
-  getOriginalImageUrlsConsecutively(message, 0, S_ORIGINAL_SELECTOR);
+  State.thumbsCount(message.urls.length);
+  
+  getOriginalImageUrlsConsecutively(message, 0);
 }
 
 async function getOriginalImageUrlsConsecutively(message, i, imageSelector) {
@@ -162,26 +183,26 @@ async function getOriginalImageUrlsConsecutively(message, i, imageSelector) {
     return;
   }
 
-  const { title, href, thumbUrl, originalHref, isPreloaded } = message.urls[i];
+  const imageData = message.urls[i];
+  const { originalHref, isPreloaded } = imageData;
 
   if (!State.isDownloadingInProgress()) {
-    sendDownloadingProgress(message.tabId, 0);
     State.savedOriginalUrls([]);
     return;
   }
 
-  sendDownloadingProgress(message.galleryTabId, i + 1, `Preparing: ${originalHref}`);
+  sendDownloadingProgress(message.tabId, i + 1, `${DOWNLOAD_STATUS.PREPARING}${originalHref}`);
 
   if (isPreloaded || !isValidUrl(originalHref)) {
-    saveOriginalUrl({ originalHref, originalUrl: originalHref || thumbUrl });
+    saveOriginalUrl({
+      ...imageData,
+      originalUrl: originalHref,
+      reason: message.reason
+    });
   } else {
     await getImageUrlFromNextPage({
-      title,
-      href,
-      thumbUrl,
-      originalHref,
-      imageSelector,
-      reason: EXTRACTION_REASON.COLLECT_ORIGINAL_URLS,
+      ...imageData,
+      reason: message.reason,
     });
   }
 

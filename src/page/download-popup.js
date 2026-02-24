@@ -1,7 +1,7 @@
 const browser = require("webextension-polyfill/dist/browser-polyfill.min");
 
 import { EXTENSION_NAME, MESSAGES } from "../shared/consts";
-import { createElement } from "../shared/markup";
+import { createElement, downloadFile } from "../shared/markup";
 
 const CLASSES = {
   ANIMATION: "ANIMATION",
@@ -14,7 +14,21 @@ const CLASSES = {
   DOWNLOAD_TOTAL: "DOWNLOAD_TOTAL",
 };
 
-export function setupDownloadPopup(totalCount) {
+const Popup = {
+  container: null,
+  styles: null,
+  downloadLeft: null,
+  downloadingFile: null,
+  inProgress: false,
+};
+
+export default {
+  build: buildPopup,
+  update: updatePopup,
+  inProgress: () => Popup.inProgress,
+}
+
+function buildPopup (totalCount) {
   const uid = Date.now();
 
   const container = createElement("div", "", [
@@ -23,11 +37,11 @@ export function setupDownloadPopup(totalCount) {
   const stopDownloadingButton = createElement("button", "Stop", [
     prefixClassName(uid, CLASSES.STOP_BUTTON),
   ]);
-  stopDownloadingButton.onclick = stopDownloading;
+  stopDownloadingButton.onclick = removePopup;
   const progressContainer = createElement("div", "", [
     prefixClassName(uid, CLASSES.PROGRESS_CONTAINER),
   ]);
-  const downloadingFile = createElement("p", "asdfasfdsafsdfsadfsdafsdafsdfasdfsdafsdf.jpg", [
+  const downloadingFile = createElement("p", "", [
     prefixClassName(uid, CLASSES.DOWNLOADING_FILE),
   ]);
   const progressSpinner = createElement("div", "", [
@@ -53,38 +67,48 @@ export function setupDownloadPopup(totalCount) {
 
   const styles = createStyles(uid);
 
-  function stopDownloading() {
-    browser.runtime.sendMessage({
-      type: MESSAGES.STOP_DOWNLOADING
-    });
-    removePopup(container, styles);
-  }
-
-  function updatePopup (count, filename) {
-    if (count) {
-      setText(downloadLeft, count);
-    }
-
-    if (filename) {
-      setText(downloadingFile, filename);
-    }
-
-    if (count === 0) {
-      removePopup();
-    }
-  }
-
-  function removePopup() {
-    document.body.removeChild(container);
-    document.body.removeChild(styles);
-  }
+  window.addEventListener("beforeunload", removePopup);
 
   document.body.appendChild(styles);
   document.body.appendChild(container);
 
-  return {
-    update: updatePopup,
-  };
+  Popup.container = container;
+  Popup.styles = styles;
+  Popup.downloadLeft = downloadLeft;
+  Popup.downloadingFile = downloadingFile;
+  Popup.inProgress = true;
+}
+
+function removePopup() {
+  if (!Popup.container) {
+    return;
+  }
+
+  browser.runtime.sendMessage({
+    type: MESSAGES.STOP_DOWNLOADING,
+  });
+  Popup.downloadLeft = null;
+  Popup.downloadingFile = null;
+  document.body.removeChild(Popup.container);
+  document.body.removeChild(Popup.styles);
+  Popup.container = null;
+  Popup.styles = null;
+  Popup.inProgress = false;
+  window.removeEventListener("beforeunload", removePopup);
+}
+
+function updatePopup(count, filename) {
+  if (count) {
+    setText(Popup.downloadLeft, count);
+  }
+
+  if (filename) {
+    setText(Popup.downloadingFile, filename);
+  }
+
+  if (count === 0) {
+    removePopup();
+  }
 }
 
 function setText(domNode, text) {
@@ -106,6 +130,7 @@ function createStyles(uid) {
 
     .${prefixClassName(uid, CLASSES.CONTAINER)} {
       position: fixed;
+      z-index: 9999;
       top: 20px;
       right: 20px;
       text-align: left;
@@ -131,6 +156,7 @@ function createStyles(uid) {
       width: 250px;
       align-self: end;
       background-color: white;
+      border: 2px solid black;
     }
 
     .${prefixClassName(uid, CLASSES.STOP_BUTTON)}:hover {

@@ -1239,6 +1239,74 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 
 /***/ }),
 
+/***/ "./src/page/download-all-as-archive.js":
+/*!*********************************************!*\
+  !*** ./src/page/download-all-as-archive.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   downloadAllAsArchive: () => (/* binding */ downloadAllAsArchive)
+/* harmony export */ });
+/* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _shared_logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../shared/logger */ "./src/shared/logger.js");
+/* harmony import */ var _download_popup__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./download-popup */ "./src/page/download-popup.js");
+const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyfill.min */ "./node_modules/webextension-polyfill/dist/browser-polyfill.min.js");
+const JSZip = __webpack_require__(/*! jszip */ "./node_modules/jszip/dist/jszip.min.js");
+
+
+
+
+
+
+async function downloadAllAsArchive(pageData) {
+  const zip = new JSZip();
+  const { originalUrls } = pageData;
+  const { title } = originalUrls[0];
+
+  for (let i = 0; i < originalUrls.length; i++) {
+    if (!_download_popup__WEBPACK_IMPORTED_MODULE_3__["default"].inProgress()) {
+      return;
+    }
+
+    const idx = i + 1;
+    const [fileName, downloadUrl] = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_0__.getFileName)(originalUrls[i], idx);
+    const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_0__.extractExtension)(downloadUrl);
+
+    _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].add(i)
+    _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].add(originalUrls[i]);
+    _download_popup__WEBPACK_IMPORTED_MODULE_3__["default"].update(idx, `${_shared_consts__WEBPACK_IMPORTED_MODULE_1__.DOWNLOAD_STATUS.DOWNLAODING}${downloadUrl}`);
+
+    try {
+      const file = await fetch(downloadUrl).then((res) => res.arrayBuffer());
+      zip.file(`${fileName}.${extension}`, file);
+    } catch (e) {
+      console.error(e);
+      _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].error(`${e} ${downloadUrl}`);
+    }
+  }
+
+  zip.file(_shared_consts__WEBPACK_IMPORTED_MODULE_1__.DEBUG_FILENAME, _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].flush());
+
+  const zipData = await zip.generateAsync({
+    type: "blob",
+    streamFiles: true,
+  });
+
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(zipData);
+  link.download = `${title}.zip`;
+  link.click();
+
+  _download_popup__WEBPACK_IMPORTED_MODULE_3__["default"].update(0);
+}
+
+
+/***/ }),
+
 /***/ "./src/page/download-popup.js":
 /*!************************************!*\
   !*** ./src/page/download-popup.js ***!
@@ -1248,7 +1316,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   setupDownloadPopup: () => (/* binding */ setupDownloadPopup)
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
 /* harmony import */ var _shared_markup__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/markup */ "./src/shared/markup.js");
@@ -1268,7 +1336,21 @@ const CLASSES = {
   DOWNLOAD_TOTAL: "DOWNLOAD_TOTAL",
 };
 
-function setupDownloadPopup(totalCount) {
+const Popup = {
+  container: null,
+  styles: null,
+  downloadLeft: null,
+  downloadingFile: null,
+  inProgress: false,
+};
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  build: buildPopup,
+  update: updatePopup,
+  inProgress: () => Popup.inProgress,
+});
+
+function buildPopup (totalCount) {
   const uid = Date.now();
 
   const container = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", [
@@ -1277,11 +1359,11 @@ function setupDownloadPopup(totalCount) {
   const stopDownloadingButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("button", "Stop", [
     prefixClassName(uid, CLASSES.STOP_BUTTON),
   ]);
-  stopDownloadingButton.onclick = stopDownloading;
+  stopDownloadingButton.onclick = removePopup;
   const progressContainer = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", [
     prefixClassName(uid, CLASSES.PROGRESS_CONTAINER),
   ]);
-  const downloadingFile = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("p", "asdfasfdsafsdfsadfsdafsdafsdfasdfsdafsdf.jpg", [
+  const downloadingFile = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("p", "", [
     prefixClassName(uid, CLASSES.DOWNLOADING_FILE),
   ]);
   const progressSpinner = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", [
@@ -1307,38 +1389,48 @@ function setupDownloadPopup(totalCount) {
 
   const styles = createStyles(uid);
 
-  function stopDownloading() {
-    browser.runtime.sendMessage({
-      type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.STOP_DOWNLOADING
-    });
-    removePopup(container, styles);
-  }
-
-  function updatePopup (count, filename) {
-    if (count) {
-      setText(downloadLeft, count);
-    }
-
-    if (filename) {
-      setText(downloadingFile, filename);
-    }
-
-    if (count === 0) {
-      removePopup();
-    }
-  }
-
-  function removePopup() {
-    document.body.removeChild(container);
-    document.body.removeChild(styles);
-  }
+  window.addEventListener("beforeunload", removePopup);
 
   document.body.appendChild(styles);
   document.body.appendChild(container);
 
-  return {
-    update: updatePopup,
-  };
+  Popup.container = container;
+  Popup.styles = styles;
+  Popup.downloadLeft = downloadLeft;
+  Popup.downloadingFile = downloadingFile;
+  Popup.inProgress = true;
+}
+
+function removePopup() {
+  if (!Popup.container) {
+    return;
+  }
+
+  browser.runtime.sendMessage({
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.STOP_DOWNLOADING,
+  });
+  Popup.downloadLeft = null;
+  Popup.downloadingFile = null;
+  document.body.removeChild(Popup.container);
+  document.body.removeChild(Popup.styles);
+  Popup.container = null;
+  Popup.styles = null;
+  Popup.inProgress = false;
+  window.removeEventListener("beforeunload", removePopup);
+}
+
+function updatePopup(count, filename) {
+  if (count) {
+    setText(Popup.downloadLeft, count);
+  }
+
+  if (filename) {
+    setText(Popup.downloadingFile, filename);
+  }
+
+  if (count === 0) {
+    removePopup();
+  }
 }
 
 function setText(domNode, text) {
@@ -1360,6 +1452,7 @@ function createStyles(uid) {
 
     .${prefixClassName(uid, CLASSES.CONTAINER)} {
       position: fixed;
+      z-index: 9999;
       top: 20px;
       right: 20px;
       text-align: left;
@@ -1385,6 +1478,7 @@ function createStyles(uid) {
       width: 250px;
       align-self: end;
       background-color: white;
+      border: 2px solid black;
     }
 
     .${prefixClassName(uid, CLASSES.STOP_BUTTON)}:hover {
@@ -1434,6 +1528,10 @@ function createStyles(uid) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   CHARACTERS: () => (/* binding */ CHARACTERS),
+/* harmony export */   COLLECTING_REASON: () => (/* binding */ COLLECTING_REASON),
+/* harmony export */   DEBUG_FILENAME: () => (/* binding */ DEBUG_FILENAME),
+/* harmony export */   DOWNLOAD_STATUS: () => (/* binding */ DOWNLOAD_STATUS),
 /* harmony export */   ERRORS: () => (/* binding */ ERRORS),
 /* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
@@ -1461,6 +1559,12 @@ const MESSAGES = {
   ERROR: "ERROR",
 };
 
+const COLLECTING_REASON = {
+  FOR_GALLERY: "FOR_GALLERY",
+  DOWNLOAD_ON_SITE_RAW: "DOWNLOAD_ON_SITE_RAW",
+  DOWNLOAD_ON_SITE_AS_ARCHIVE: "DOWNLOAD_ON_SITE_AS_ARCHIVE",
+}
+
 const EXTRACTION_REASON = {
   DOWNLOAD: "DOWNLOAD",
   COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
@@ -1481,6 +1585,18 @@ const ERRORS = {
   INVALID_URL: "Invalid URL",
 };
 
+const CHARACTERS = {
+  TAB: "\t",
+  NL: "\n",
+};
+
+const DEBUG_FILENAME = "image_urls.txt";
+
+const DOWNLOAD_STATUS = {
+  DOWNLAODING: "Downloading: ",
+  PREPARING: "Preparing: ",
+}
+
 
 /***/ }),
 
@@ -1497,12 +1613,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
+/* harmony export */   getFileName: () => (/* binding */ getFileName),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
 /* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
-/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters),
-/* harmony export */   selectImageName: () => (/* binding */ selectImageName)
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
 /* harmony export */ });
 /* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
@@ -1571,16 +1687,70 @@ function extractOriginalFileName (url) {
   return url.split("/").slice(-1)[0].split(".")[0];
 }
 
-function selectImageName(type, title, url, original) {
-  const name = type === "URL"
-    ? url
-    : type === "Original"
-      ? extractOriginalFileName(original)
-      : title;
+function getFileName (pictureData, idx) {
+  const { thumbUrl, originalUrl, originalHref, origin, title, href, naming } = pictureData;
 
-  return removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
+  const downloadUrl =
+      originalUrl && isMediaResource(originalUrl, origin)
+        ? originalUrl
+        : thumbUrl;
+
+  const name =
+    naming === "URL"
+      ? href
+      : naming === "Original"
+        ? extractOriginalFileName(originalUrl || originalHref)
+        : title;
+
+  const number = naming !== "Original" && idx ? ` (${idx})` : "";
+
+  const fileName = `${removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME)}${number}`;
+
+  return [fileName, downloadUrl];
 }
 
+
+/***/ }),
+
+/***/ "./src/shared/logger.js":
+/*!******************************!*\
+  !*** ./src/shared/logger.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
+
+
+const { TAB, NL } = _consts__WEBPACK_IMPORTED_MODULE_0__.CHARACTERS;
+
+let logText = "";
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  add: (text) => {
+    if (Array.isArray(text)) {
+      logText += text.join(TAB);
+    } else if (typeof text === "object") {
+      logText += Object.keys(text).map((k) => `${k}: ${text[k]}`).join(NL) + NL;
+    } else {
+      logText += text;
+    }
+
+    logText += NL;
+  },
+  error: (text) => {
+    logText += text + NL + NL
+  },
+  flush: () => {
+    const temp = logText;
+    logText = "";
+    return temp;
+  }
+});
 
 /***/ }),
 
@@ -1746,12 +1916,13 @@ var __webpack_exports__ = {};
   !*** ./src/images-gallery/images-gallery.js ***!
   \**********************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _page_download_popup__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../page/download-popup */ "./src/page/download-popup.js");
-/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _page_download_all_as_archive__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../page/download-all-as-archive */ "./src/page/download-all-as-archive.js");
 /* harmony import */ var _shared_markup__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../shared/markup */ "./src/shared/markup.js");
 /* harmony import */ var _shared_helpers__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../shared/helpers */ "./src/shared/helpers.js");
+/* harmony import */ var _page_download_popup__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../page/download-popup */ "./src/page/download-popup.js");
 const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyfill.min */ "./node_modules/webextension-polyfill/dist/browser-polyfill.min.js");
-const JSZip = __webpack_require__(/*! jszip */ "./node_modules/jszip/dist/jszip.min.js");
+
 
 
 
@@ -1774,33 +1945,25 @@ const DOWNLOAD_THUMBNAIL_BUTTON = document.querySelector('.loadThumbnail');
 const SMALL_THUMBNAIL = document.querySelector('.smallThumbnail');
 const OPEN_SETTINGS_BUTTON = document.querySelector('.openSettings');
 
-const DOWNLOAD_INFO_HEADRERS = [
-  "Title",
-  "URL",
-  "Thumb",
-  "Original",
-  "Original Title",
-];
-
 browser.runtime.sendMessage({
-  type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.IMAGES_GALLERY_COMPLETED,
+  type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.IMAGES_GALLERY_COMPLETED,
 });
 
 browser.runtime.onMessage.addListener(onMessage);
 
 function onMessage(message) {
   switch (message.type) {
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_IMAGES_URLS:
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_IMAGES_URLS:
       buildPage(message);
       break;
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL:
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL:
       updateOriginalUrl(message);
       break;
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_DOWNLOADING_PROGRESS:
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_DOWNLOADING_PROGRESS:
       updateTotalDownloadCount(message);
       break;
-    case _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS:
-      downloadAllAsArchive(message);
+    case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS:
+      (0,_page_download_all_as_archive__WEBPACK_IMPORTED_MODULE_1__.downloadAllAsArchive)(message);
       break;
   }
 }
@@ -1813,7 +1976,6 @@ function onMessage(message) {
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(DOWNLOAD_ALL_AS_ARCHIVE, "click", prepareDownloadAllAsArchive);
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
 (0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(OPEN_SETTINGS_BUTTON, "click", openSettings);
-(0,_shared_markup__WEBPACK_IMPORTED_MODULE_2__.setupEventHandler)(window, 'beforeunload', stopDownloading);
 
 function buildPage (message) {
   window.__PAGE_DATA = message;
@@ -1878,13 +2040,13 @@ async function downloadImage (e) {
   }
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_ORIGINAL_URL,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_URL,
     title,
     originalHref,
     href,
     thumbUrl,
     isFromGallery: true,
-    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.DOWNLOAD,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.DOWNLOAD,
   });
 }
 
@@ -1901,23 +2063,23 @@ async function showOriginal(e) {
   }
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.GET_IMAGE_URL_FOR_GALLERY,
-    galleryTabId: tabId,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.GET_IMAGE_URL_FOR_GALLERY,
+    tabId,
     title,
     originalHref,
     href,
     thumbUrl,
-    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.GET_ORIGINAL_URL,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.GET_ORIGINAL_URL,
   });
 }
 
 async function downloadAllImages () {
   const { title, href, urls, tabId } = window.__PAGE_DATA;
 
-  window.__PAGE_DATA.popup = (0,_page_download_popup__WEBPACK_IMPORTED_MODULE_0__.setupDownloadPopup)(window.__PAGE_DATA.urls.length);
+  _page_download_popup__WEBPACK_IMPORTED_MODULE_4__["default"].build(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.SAVE_ALL_CONTENT_RAW,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.SAVE_ALL_CONTENT_RAW,
     title,
     href,
     urls,
@@ -1935,6 +2097,7 @@ function switchLayover () {
 function updateOriginalUrl (message) {
   const item = window.__PAGE_DATA.urls.find((el) => el.originalHref === message.originalHref);
   item.originalUrl = message.originalUrl;
+  item.originalHref = message.originalUrl;
   item.isPreloaded = true;
   updateBigPicture(message.originalUrl, item.thumbUrl);
 }
@@ -1955,91 +2118,20 @@ function getPictureData (thumbUrl) {
 }
 
 function updateTotalDownloadCount ({ count, filename }) {
-  const { update } = window.__PAGE_DATA.popup;
-
-  update(count, filename);
-
-  if (!count) {
-    window.__PAGE_DATA.popup = null;
-  }
-}
-
-function stopDownloading () {
-  browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.STOP_DOWNLOADING
-  });
-  window.__PAGE_DATA.isDownloading = false;
+ _page_download_popup__WEBPACK_IMPORTED_MODULE_4__["default"].update(count, filename);
 }
 
 async function prepareDownloadAllAsArchive () {
-  const { title, href, urls, tabId } = window.__PAGE_DATA;
-
-  window.__PAGE_DATA.popup = (0,_page_download_popup__WEBPACK_IMPORTED_MODULE_0__.setupDownloadPopup)(window.__PAGE_DATA.urls.length);
+  const { urls, tabId } = window.__PAGE_DATA;
+  
+  _page_download_popup__WEBPACK_IMPORTED_MODULE_4__["default"].build(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY,
-    title,
-    href,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY,
     urls,
-    galleryTabId: tabId,
+    tabId,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.COLLECT_ORIGINAL_URLS,
   });
-}
-
-async function downloadAllAsArchive (message) {
-  const zip = new JSZip();
-  const { urls, href, origin, title, naming, specialRule } = window.__PAGE_DATA;
-  const [S_ORIGIN,,,S_NAMING] = specialRule;
-
-  window.__PAGE_DATA.isDownloading = true;
-  let info = DOWNLOAD_INFO_HEADRERS.join("\t") + "\n";
-
-  for (let i = 0; i < urls.length; i++) {
-    if (!window.__PAGE_DATA.isDownloading) {
-      updateTotalDownloadCount({ count: 0 });
-      return;
-    }
-
-    const pictureData = window.__PAGE_DATA.urls[i];
-    const newPictureData = message.originalUrls.find(
-      ({ originalHref }) =>
-        originalHref === pictureData.originalHref ||
-        (originalHref && originalHref.startsWith(pictureData.originalHref)),
-    );
-
-    Object.assign(pictureData, newPictureData, { isPreloaded: true });
-    const { thumbUrl, originalHref, originalUrl, originalTitle } = pictureData;
-
-    try {
-      const downloadUrl = originalUrl && (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.isMediaResource)(originalUrl, S_ORIGIN || origin) ? originalUrl : thumbUrl;
-      updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
-      const file = await fetch(downloadUrl).then((res) => res.blob());
-      const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.extractExtension)(downloadUrl);
-      const fileNaming = S_NAMING || naming;
-      const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.selectImageName)(fileNaming, title, href, downloadUrl);
-      const fileName = `${name}${fileNaming !== "Original" ? ` (${i + 1})` : ""}.${extension}`;
-      zip.file(fileName, file);
-      info +=
-        [name, href, thumbUrl, originalHref, originalUrl, originalTitle].join(
-          "\t",
-        ) + "\n";
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  zip.file(`info.txt`, new Blob([info], { type: "text/plain" }));
-
-  const zipData = await zip.generateAsync({
-    type: "blob",
-    streamFiles: true,
-  });
-
-  const link = document.createElement("a");
-  link.href = window.URL.createObjectURL(zipData);
-  link.download = `${window.__PAGE_DATA.title}.zip`;
-  link.click();
-
-  updateTotalDownloadCount({ count: 0 });
 }
 
 function onShowingOriginalError (url, thumbUrl) {
@@ -2055,16 +2147,16 @@ function downloadThumbnail (e) {
   const { title, href } = window.__PAGE_DATA;
 
   browser.runtime.sendMessage({
-    type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.RECEIVE_ORIGINAL_URL,
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_URL,
     title,
     href,
     thumbUrl: e.target.dataset.thumbUrl,
-    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.EXTRACTION_REASON.DOWNLOAD,
+    reason: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.DOWNLOAD,
   });
 }
 
 function openSettings () {
-  browser.runtime.sendMessage({ type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.OPEN_SETTINGS });
+  browser.runtime.sendMessage({ type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.OPEN_SETTINGS });
 }
 
 })();

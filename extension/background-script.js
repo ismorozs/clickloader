@@ -1249,6 +1249,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   createGalleryPage: () => (/* binding */ createGalleryPage),
 /* harmony export */   getOriginalImageUrlForPreview: () => (/* binding */ getOriginalImageUrlForPreview),
 /* harmony export */   prepareForGalleryPage: () => (/* binding */ prepareForGalleryPage),
+/* harmony export */   saveAllOriginalImagesAsArchive: () => (/* binding */ saveAllOriginalImagesAsArchive),
 /* harmony export */   saveOriginalUrl: () => (/* binding */ saveOriginalUrl),
 /* harmony export */   sendImagesUrlsToGallery: () => (/* binding */ sendImagesUrlsToGallery),
 /* harmony export */   sendOriginalImageUrlForPreview: () => (/* binding */ sendOriginalImageUrlForPreview)
@@ -1264,12 +1265,15 @@ const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules
 
 
 
-async function prepareForGalleryPage() {
+async function prepareForGalleryPage(reason) {
   const tab = await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.getCurrentTab)();
   await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.executeScript)(tab.id, _shared_consts__WEBPACK_IMPORTED_MODULE_2__.SCRIPTS.EXTRACT_ALL_IMAGES_URLS);
   browser.tabs.sendMessage(tab.id, {
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_2__.MESSAGES.GET_PICTURE_URLS,
     specialRules: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules(),
+    naming: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(),
+    reason,
+    tabId: tab.id,
   });
 }
 
@@ -1356,8 +1360,25 @@ async function saveOriginalUrl(message) {
       return;
     }
 
+    if (message.reason === _shared_consts__WEBPACK_IMPORTED_MODULE_2__.COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE) {
+      saveAllOriginalImagesAsArchive();
+      return;
+    }
+
     sendOriginalUrlsToGallery();
   }
+}
+
+async function saveAllOriginalImagesAsArchive() {
+  const tab = await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.getCurrentTab)();
+  browser.tabs.sendMessage(tab.id, {
+    originalUrls: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls(),
+    type: _shared_consts__WEBPACK_IMPORTED_MODULE_2__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS,
+    naming: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(),
+    specialRule: (0,___WEBPACK_IMPORTED_MODULE_1__.getSpecialRule)(tab.url, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules()),
+  });
+
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
 }
 
 async function updateUrlsAndResendImagesToGallery() {
@@ -1367,9 +1388,12 @@ async function updateUrlsAndResendImagesToGallery() {
 }
 
 async function sendOriginalUrlsToGallery() {
+  const galleryTab = _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesTab();
   browser.tabs.sendMessage(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].galleryImagesTab().id, {
     originalUrls: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls(),
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_2__.MESSAGES.RECEIVE_PRELOADED_IMAGES_URLS,
+    naming: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(),
+    specialRule: (0,___WEBPACK_IMPORTED_MODULE_1__.getSpecialRule)(galleryTab.url, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules())
   });
 
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
@@ -1381,18 +1405,14 @@ async function getOriginalImageUrlForPreview(message) {
     _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules(),
   );
   (0,___WEBPACK_IMPORTED_MODULE_1__.getImageUrlFromNextPage)({
-    title: message.title,
-    href: message.href,
-    thumbUrl: message.thumbUrl,
-    originalHref: message.originalHref,
+    ...message,
     imageSelector: S_ORIGINAL_SELECTOR,
     reason: _shared_consts__WEBPACK_IMPORTED_MODULE_2__.EXTRACTION_REASON.GET_ORIGINAL_URL,
-    galleryTabId: message.galleryTabId,
   });
 }
 
-async function sendOriginalImageUrlForPreview({ galleryTabId, originalHref, originalUrl }) {
-  browser.tabs.sendMessage(galleryTabId, {
+async function sendOriginalImageUrlForPreview({ tabId, originalHref, originalUrl }) {
+  browser.tabs.sendMessage(tabId, {
     originalHref,
     originalUrl,
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_2__.MESSAGES.RECEIVE_ORIGINAL_IMAGE_URL,
@@ -1400,11 +1420,11 @@ async function sendOriginalImageUrlForPreview({ galleryTabId, originalHref, orig
 }
 
 async function collectAllOriginalImageUrls(message) {
-  const [,, S_ORIGINAL_SELECTOR] = (0,___WEBPACK_IMPORTED_MODULE_1__.getSpecialRule)(message.href, _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].specialRules());
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(true);
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
-
-  getOriginalImageUrlsConsecutively(message, 0, S_ORIGINAL_SELECTOR);
+  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].thumbsCount(message.urls.length);
+  
+  getOriginalImageUrlsConsecutively(message, 0);
 }
 
 async function getOriginalImageUrlsConsecutively(message, i, imageSelector) {
@@ -1412,26 +1432,26 @@ async function getOriginalImageUrlsConsecutively(message, i, imageSelector) {
     return;
   }
 
-  const { title, href, thumbUrl, originalHref, isPreloaded } = message.urls[i];
+  const imageData = message.urls[i];
+  const { originalHref, isPreloaded } = imageData;
 
   if (!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress()) {
-    (0,___WEBPACK_IMPORTED_MODULE_1__.sendDownloadingProgress)(message.tabId, 0);
     _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].savedOriginalUrls([]);
     return;
   }
 
-  (0,___WEBPACK_IMPORTED_MODULE_1__.sendDownloadingProgress)(message.galleryTabId, i + 1, `Preparing: ${originalHref}`);
+  (0,___WEBPACK_IMPORTED_MODULE_1__.sendDownloadingProgress)(message.tabId, i + 1, `${_shared_consts__WEBPACK_IMPORTED_MODULE_2__.DOWNLOAD_STATUS.PREPARING}${originalHref}`);
 
   if (isPreloaded || !(0,_shared_helpers__WEBPACK_IMPORTED_MODULE_3__.isValidUrl)(originalHref)) {
-    saveOriginalUrl({ originalHref, originalUrl: originalHref || thumbUrl });
+    saveOriginalUrl({
+      ...imageData,
+      originalUrl: originalHref,
+      reason: message.reason
+    });
   } else {
     await (0,___WEBPACK_IMPORTED_MODULE_1__.getImageUrlFromNextPage)({
-      title,
-      href,
-      thumbUrl,
-      originalHref,
-      imageSelector,
-      reason: _shared_consts__WEBPACK_IMPORTED_MODULE_2__.EXTRACTION_REASON.COLLECT_ORIGINAL_URLS,
+      ...imageData,
+      reason: message.reason,
     });
   }
 
@@ -1531,7 +1551,7 @@ async function saveContent(message) {
     originalHref,
     originalTitle,
     isPreloaded,
-    galleryTabId,
+    tabId,
     isFromGallery,
     isFromSpecialCase,
   } = message;
@@ -1587,13 +1607,16 @@ async function saveContent(message) {
     [downloadUrl, extension] = [originalUrl, fileExtension];
   }
 
-  const name = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.selectImageName)(S_NAMING || _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(), title, href, downloadUrl);
+  const [name] = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.getFileName)({
+    ...message,
+    naming: S_NAMING || _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveNaming(),
+  });
   const fileName = `${saveFolder}${name}.${extension}`;
 
   try {
     await download(downloadUrl, fileName);
   } catch (e) {
-    (0,_error__WEBPACK_IMPORTED_MODULE_3__.sendOriginalNotFoundError)(galleryTabId, originalHref);
+    (0,_error__WEBPACK_IMPORTED_MODULE_3__.sendOriginalNotFoundError)(tabId, originalHref);
     await download(thumbUrl, fileName);
   }
 }
@@ -1612,12 +1635,12 @@ async function saveAllOriginalImagesRaw(message) {
         type: _shared_consts__WEBPACK_IMPORTED_MODULE_1__.MESSAGES.SAVE_CONTENT,
         isPreloaded,
         isFromGallery: true,
-        galleryTabId: message.tabId,
+        tabId: message.tabId,
       });
       await sendDownloadingProgress(
         message.tabId,
         i + 1,
-        `Downloading: ${originalHref}`,
+        `${_shared_consts__WEBPACK_IMPORTED_MODULE_1__.DOWNLOAD_STATUS.DOWNLAODING}${originalHref}`,
       );
     }
   }
@@ -1627,6 +1650,8 @@ async function saveAllOriginalImagesRaw(message) {
 
 async function stopDownloading() {
   _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].isDownloadingInProgress(false);
+  const tab = await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.getCurrentTab)();
+  sendDownloadingProgress(tab.id, 0);
 }
 
 async function sendDownloadingProgress(tabId, count, filename) {
@@ -1641,29 +1666,17 @@ async function download(url, filename) {
   await browser.downloads.download({ url, saveAs: false, filename });
 }
 
-async function getImageUrlFromNextPage({
-  originalHref,
-  imageSelector,
-  reason,
-  galleryTabId,
-  thumbUrl,
-  title,
-  href,
-}) {
+async function getImageUrlFromNextPage(message)
+ {
   const newTab = await browser.tabs.create({
-    url: originalHref,
+    url: message.originalHref,
     active: false,
   });
 
   await (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_2__.executeScript)(newTab.id, _shared_consts__WEBPACK_IMPORTED_MODULE_1__.SCRIPTS.DOWNLOAD_ORIGINAL_IMAGE_URL);
   await browser.tabs.sendMessage(newTab.id, {
-    imageSelector,
-    reason,
-    galleryTabId,
+    ...message,
     tabWithOriginId: newTab.id,
-    thumbUrl,
-    title,
-    href,
   });
 }
 
@@ -1696,10 +1709,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   onContextMenuClicked: () => (/* binding */ onContextMenuClicked),
 /* harmony export */   setupContextMenu: () => (/* binding */ setupContextMenu)
 /* harmony export */ });
-/* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
-/* harmony import */ var _actions__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./actions */ "./src/background/actions/index.js");
-/* harmony import */ var _actions_gallery__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./actions/gallery */ "./src/background/actions/gallery.js");
+/* harmony import */ var _shared_consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../shared/consts */ "./src/shared/consts.js");
+/* harmony import */ var _shared_state__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../shared/state */ "./src/shared/state.js");
+/* harmony import */ var _actions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./actions */ "./src/background/actions/index.js");
+/* harmony import */ var _actions_gallery__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./actions/gallery */ "./src/background/actions/gallery.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
+
 
 
 
@@ -1713,6 +1728,7 @@ const EVENT_MEANINGS = {
 
 const TRY_ORIGINAL_STATES = ['Disabled', 'Download original'];
 const NAMING_STATES = ["Title", "URL", "Original"];
+const DOWNLOAD_ALL_OPTIONS = ["Raw", "As archive"];
 
 const CONTEXT_MENU = {
   MAIN: { ID: 'MAIN', TITLE: (isActive, tryOriginal) => {
@@ -1724,6 +1740,7 @@ const CONTEXT_MENU = {
   MANAGE_FOLDERS: { ID: 'N', TITLE: 'Manage folders' },
   METHOD_SUBMENU: { ID: 'M', TITLE: (currentMethod) => 'Save method: ' + EVENT_MEANINGS[currentMethod] },
   NAMING_SUBMENU: { ID: 'G', TITLE: (currentNaming) => `Save naming: ${currentNaming}` },
+  DOWNLOAD_ALL_SUBMENU: { ID: 'D', TITLE: "Download all from the page" },
   TRY_DOWNLOAD_ORIGINAL: { ID: 'O', TITLE: (currentTryOriginal) => buildTryOriginalTitle(currentTryOriginal) },
   SHOW_PICTURES_GALERY: { ID: 'P', TITLE: 'Show page pictures' },
   CUSTOMIZE: { ID: 'C', TITLE: 'Customize special rules' },
@@ -1731,6 +1748,7 @@ const CONTEXT_MENU = {
   SEPARATOR2: { ID: 'SEPARATOR2' },
   SEPARATOR3: { ID: 'SEPARATOR3' },
   SEPARATOR4: { ID: 'SEPARATOR4' },
+  SEPARATOR5: { ID: 'SEPARATOR5' },
 };
 
 function buildTryOriginalTitle (currentTryOriginal) {
@@ -1742,6 +1760,13 @@ function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, saveNa
     browser.contextMenus.create({ id: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.MAIN.TITLE(active, tryOriginal), contexts: ["all"] });
     browser.contextMenus.create({ id: CONTEXT_MENU.SWITCH.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.SWITCH.TITLE(active), contexts: ["all"] });
     setupTryDownloadOrignalSubmenu(tryOriginal);
+    
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.SEPARATOR5.ID,
+      parentId: CONTEXT_MENU.MAIN.ID,
+      type: "separator",
+    });
+
     browser.contextMenus.create({ id: CONTEXT_MENU.SEPARATOR4.ID, parentId: CONTEXT_MENU.MAIN.ID, type: 'separator' });
 
     setupFolderSubmenu(saveFolders, saveFolder);
@@ -1753,6 +1778,9 @@ function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod, saveNa
       parentId: CONTEXT_MENU.MAIN.ID,
       type: "separator",
     });
+
+    setupDownloadAllSubmenu();
+
     browser.contextMenus.create({
       id: CONTEXT_MENU.SHOW_PICTURES_GALERY.ID,
       parentId: CONTEXT_MENU.MAIN.ID,
@@ -1803,6 +1831,24 @@ function setupNamingSubmnenu (currentNaming) {
       checked: isActive,
     });
   }); 
+}
+
+function setupDownloadAllSubmenu () {
+  browser.contextMenus.create({
+    id: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID,
+    parentId: CONTEXT_MENU.MAIN.ID,
+    title: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.TITLE,
+    contexts: ["all"],
+  });
+
+  DOWNLOAD_ALL_OPTIONS.forEach((title, i) => {
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID + i,
+      parentId: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID,
+      title,
+      contexts: ["all"],
+    });
+  });
 }
 
 function setupTryDownloadOrignalSubmenu (currentTryOriginal) {
@@ -1856,12 +1902,16 @@ function onContextMenuClicked (info) {
       changeSaveNaming(info.menuItemId[1]);
       break;
 
+    case CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID:
+      downloadAll(info.menuItemId[1]);
+      break;
+
     case CONTEXT_MENU.MANAGE_FOLDERS.ID:
-      (0,_actions__WEBPACK_IMPORTED_MODULE_1__.openSettings)();
+      (0,_actions__WEBPACK_IMPORTED_MODULE_2__.openSettings)();
       return;
 
     case CONTEXT_MENU.CUSTOMIZE.ID:
-      (0,_actions__WEBPACK_IMPORTED_MODULE_1__.openSettings)();
+      (0,_actions__WEBPACK_IMPORTED_MODULE_2__.openSettings)();
       return;
 
     case CONTEXT_MENU.TRY_DOWNLOAD_ORIGINAL.ID:
@@ -1879,9 +1929,9 @@ function onContextMenuClicked (info) {
 }
 
 async function onSwitchClicked () {
-  const active = await (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(!_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveMethod());
-  _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(active);
-  setupContextMenu( _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].getContextMenuState() );
+  const active = await (0,_actions__WEBPACK_IMPORTED_MODULE_2__.runUserScript)(!_shared_state__WEBPACK_IMPORTED_MODULE_1__["default"].active(), _shared_state__WEBPACK_IMPORTED_MODULE_1__["default"].saveMethod());
+  _shared_state__WEBPACK_IMPORTED_MODULE_1__["default"].active(active);
+  setupContextMenu( _shared_state__WEBPACK_IMPORTED_MODULE_1__["default"].getContextMenuState() );
 }
 
 function changeTryDownloadOriginal (tryOriginal) {
@@ -1891,7 +1941,7 @@ function changeTryDownloadOriginal (tryOriginal) {
 function changeSaveMethod (methodIdx) {
   const saveMethod = Object.keys(EVENT_MEANINGS)[ methodIdx ];
   browser.storage.local.set({ saveMethod });
-  (0,_actions__WEBPACK_IMPORTED_MODULE_1__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].active(), saveMethod);
+  (0,_actions__WEBPACK_IMPORTED_MODULE_2__.runUserScript)(_shared_state__WEBPACK_IMPORTED_MODULE_1__["default"].active(), saveMethod);
 }
 
 function changeSaveNaming (methodIdx) {
@@ -1899,11 +1949,17 @@ function changeSaveNaming (methodIdx) {
 }
 
 async function openPagePictures () {
-  (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_2__.prepareForGalleryPage)();
+  (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_3__.prepareForGalleryPage)(_shared_consts__WEBPACK_IMPORTED_MODULE_0__.COLLECTING_REASON.FOR_GALLERY);
 }
 
 function changeSaveFolder (folderIdx) {
-  browser.storage.local.set({ saveFolder: _shared_state__WEBPACK_IMPORTED_MODULE_0__["default"].saveFolders()[ folderIdx ] });
+  browser.storage.local.set({ saveFolder: _shared_state__WEBPACK_IMPORTED_MODULE_1__["default"].saveFolders()[ folderIdx ] });
+}
+
+function downloadAll (downloadIdx) {
+  downloadIdx == 1
+    ? (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_3__.prepareForGalleryPage)(_shared_consts__WEBPACK_IMPORTED_MODULE_0__.COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE)
+    : (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_3__.prepareForGalleryPage)(_shared_consts__WEBPACK_IMPORTED_MODULE_0__.COLLECTING_REASON.DOWNLOAD_ON_SITE_RAW);
 }
 
 
@@ -2005,6 +2061,7 @@ async function onMessage(message) {
           (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_2__.sendOriginalImageUrlForPreview)(message);
           break;
         case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.EXTRACTION_REASON.COLLECT_ORIGINAL_URLS:
+        case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE:
           (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_2__.saveOriginalUrl)(message);
           break;
       }
@@ -2015,7 +2072,17 @@ async function onMessage(message) {
       break;
 
     case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_IMAGES_URLS:
-      (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_2__.createGalleryPage)(message);
+      switch (message.reason) {
+        case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.COLLECTING_REASON.DOWNLOAD_ON_SITE_RAW:
+          (0,_actions__WEBPACK_IMPORTED_MODULE_1__.saveAllOriginalImagesRaw)(message);
+          break;
+        case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE:
+          (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_2__.collectAllOriginalImageUrls)(message);
+          break;
+        default:
+          (0,_actions_gallery__WEBPACK_IMPORTED_MODULE_2__.createGalleryPage)(message);
+          break;
+      }
       break;
 
     case _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.GET_IMAGE_URL_FOR_GALLERY:
@@ -2052,6 +2119,10 @@ async function onMessage(message) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   CHARACTERS: () => (/* binding */ CHARACTERS),
+/* harmony export */   COLLECTING_REASON: () => (/* binding */ COLLECTING_REASON),
+/* harmony export */   DEBUG_FILENAME: () => (/* binding */ DEBUG_FILENAME),
+/* harmony export */   DOWNLOAD_STATUS: () => (/* binding */ DOWNLOAD_STATUS),
 /* harmony export */   ERRORS: () => (/* binding */ ERRORS),
 /* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
@@ -2079,6 +2150,12 @@ const MESSAGES = {
   ERROR: "ERROR",
 };
 
+const COLLECTING_REASON = {
+  FOR_GALLERY: "FOR_GALLERY",
+  DOWNLOAD_ON_SITE_RAW: "DOWNLOAD_ON_SITE_RAW",
+  DOWNLOAD_ON_SITE_AS_ARCHIVE: "DOWNLOAD_ON_SITE_AS_ARCHIVE",
+}
+
 const EXTRACTION_REASON = {
   DOWNLOAD: "DOWNLOAD",
   COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
@@ -2099,6 +2176,18 @@ const ERRORS = {
   INVALID_URL: "Invalid URL",
 };
 
+const CHARACTERS = {
+  TAB: "\t",
+  NL: "\n",
+};
+
+const DEBUG_FILENAME = "image_urls.txt";
+
+const DOWNLOAD_STATUS = {
+  DOWNLAODING: "Downloading: ",
+  PREPARING: "Preparing: ",
+}
+
 
 /***/ }),
 
@@ -2115,12 +2204,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
+/* harmony export */   getFileName: () => (/* binding */ getFileName),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
 /* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
-/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters),
-/* harmony export */   selectImageName: () => (/* binding */ selectImageName)
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
 /* harmony export */ });
 /* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
@@ -2189,14 +2278,26 @@ function extractOriginalFileName (url) {
   return url.split("/").slice(-1)[0].split(".")[0];
 }
 
-function selectImageName(type, title, url, original) {
-  const name = type === "URL"
-    ? url
-    : type === "Original"
-      ? extractOriginalFileName(original)
-      : title;
+function getFileName (pictureData, idx) {
+  const { thumbUrl, originalUrl, originalHref, origin, title, href, naming } = pictureData;
 
-  return removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
+  const downloadUrl =
+      originalUrl && isMediaResource(originalUrl, origin)
+        ? originalUrl
+        : thumbUrl;
+
+  const name =
+    naming === "URL"
+      ? href
+      : naming === "Original"
+        ? extractOriginalFileName(originalUrl || originalHref)
+        : title;
+
+  const number = naming !== "Original" && idx ? ` (${idx})` : "";
+
+  const fileName = `${removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME)}${number}`;
+
+  return [fileName, downloadUrl];
 }
 
 

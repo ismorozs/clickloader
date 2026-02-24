@@ -5,6 +5,7 @@ import {
   MESSAGES,
   SCRIPTS,
   EXTRACTION_REASON,
+  DOWNLOAD_STATUS,
 } from "../../shared/consts";
 import {
   selectImageName,
@@ -12,6 +13,7 @@ import {
   extractExtension,
   getCurrentTab,
   isHTTPUrl,
+  getFileName,
 } from "../../shared/helpers";
 import { sendOriginalNotFoundError } from "./error";
 
@@ -73,7 +75,7 @@ export async function saveContent(message) {
     originalHref,
     originalTitle,
     isPreloaded,
-    galleryTabId,
+    tabId,
     isFromGallery,
     isFromSpecialCase,
   } = message;
@@ -129,13 +131,16 @@ export async function saveContent(message) {
     [downloadUrl, extension] = [originalUrl, fileExtension];
   }
 
-  const name = selectImageName(S_NAMING || State.saveNaming(), title, href, downloadUrl);
+  const [name] = getFileName({
+    ...message,
+    naming: S_NAMING || State.saveNaming(),
+  });
   const fileName = `${saveFolder}${name}.${extension}`;
 
   try {
     await download(downloadUrl, fileName);
   } catch (e) {
-    sendOriginalNotFoundError(galleryTabId, originalHref);
+    sendOriginalNotFoundError(tabId, originalHref);
     await download(thumbUrl, fileName);
   }
 }
@@ -154,12 +159,12 @@ export async function saveAllOriginalImagesRaw(message) {
         type: MESSAGES.SAVE_CONTENT,
         isPreloaded,
         isFromGallery: true,
-        galleryTabId: message.tabId,
+        tabId: message.tabId,
       });
       await sendDownloadingProgress(
         message.tabId,
         i + 1,
-        `Downloading: ${originalHref}`,
+        `${DOWNLOAD_STATUS.DOWNLAODING}${originalHref}`,
       );
     }
   }
@@ -169,6 +174,8 @@ export async function saveAllOriginalImagesRaw(message) {
 
 export async function stopDownloading() {
   State.isDownloadingInProgress(false);
+  const tab = await getCurrentTab();
+  sendDownloadingProgress(tab.id, 0);
 }
 
 export async function sendDownloadingProgress(tabId, count, filename) {
@@ -183,29 +190,17 @@ async function download(url, filename) {
   await browser.downloads.download({ url, saveAs: false, filename });
 }
 
-export async function getImageUrlFromNextPage({
-  originalHref,
-  imageSelector,
-  reason,
-  galleryTabId,
-  thumbUrl,
-  title,
-  href,
-}) {
+export async function getImageUrlFromNextPage(message)
+ {
   const newTab = await browser.tabs.create({
-    url: originalHref,
+    url: message.originalHref,
     active: false,
   });
 
   await executeScript(newTab.id, SCRIPTS.DOWNLOAD_ORIGINAL_IMAGE_URL);
   await browser.tabs.sendMessage(newTab.id, {
-    imageSelector,
-    reason,
-    galleryTabId,
+    ...message,
     tabWithOriginId: newTab.id,
-    thumbUrl,
-    title,
-    href,
   });
 }
 

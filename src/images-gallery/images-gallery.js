@@ -1,10 +1,10 @@
 const browser = require("webextension-polyfill/dist/browser-polyfill.min");
-const JSZip = require("jszip");
 
-import { setupDownloadPopup } from "../page/download-popup";
 import { EXTRACTION_REASON, MESSAGES } from "../shared/consts";
+import { downloadAllAsArchive } from "../page/download-all-as-archive";
 import { createElement, emptyNode, hasClass, setupEventHandler } from "../shared/markup";
-import { extractExtension, isMediaResource, isVideo, selectImageName } from "../shared/helpers";
+import { isMediaResource, isVideo } from "../shared/helpers";
+import Popup from "../page/download-popup";
 
 const PAGE_TITLE = document.querySelector(".pageTitle");
 const PAGE_URL = document.querySelector(".pageUrl");
@@ -21,14 +21,6 @@ const ORIGINAL_IMAGE_URL = document.querySelector('.originalImageUrl');
 const DOWNLOAD_THUMBNAIL_BUTTON = document.querySelector('.loadThumbnail');
 const SMALL_THUMBNAIL = document.querySelector('.smallThumbnail');
 const OPEN_SETTINGS_BUTTON = document.querySelector('.openSettings');
-
-const DOWNLOAD_INFO_HEADRERS = [
-  "Title",
-  "URL",
-  "Thumb",
-  "Original",
-  "Original Title",
-];
 
 browser.runtime.sendMessage({
   type: MESSAGES.IMAGES_GALLERY_COMPLETED,
@@ -61,7 +53,6 @@ setupEventHandler(DOWNLOAD_ALL, "click", downloadAllImages);
 setupEventHandler(DOWNLOAD_ALL_AS_ARCHIVE, "click", prepareDownloadAllAsArchive);
 setupEventHandler(DOWNLOAD_THUMBNAIL_BUTTON, "click", downloadThumbnail);
 setupEventHandler(OPEN_SETTINGS_BUTTON, "click", openSettings);
-setupEventHandler(window, 'beforeunload', stopDownloading);
 
 function buildPage (message) {
   window.__PAGE_DATA = message;
@@ -150,7 +141,7 @@ async function showOriginal(e) {
 
   browser.runtime.sendMessage({
     type: MESSAGES.GET_IMAGE_URL_FOR_GALLERY,
-    galleryTabId: tabId,
+    tabId,
     title,
     originalHref,
     href,
@@ -162,7 +153,7 @@ async function showOriginal(e) {
 async function downloadAllImages () {
   const { title, href, urls, tabId } = window.__PAGE_DATA;
 
-  window.__PAGE_DATA.popup = setupDownloadPopup(window.__PAGE_DATA.urls.length);
+  Popup.build(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
     type: MESSAGES.SAVE_ALL_CONTENT_RAW,
@@ -183,6 +174,7 @@ function switchLayover () {
 function updateOriginalUrl (message) {
   const item = window.__PAGE_DATA.urls.find((el) => el.originalHref === message.originalHref);
   item.originalUrl = message.originalUrl;
+  item.originalHref = message.originalUrl;
   item.isPreloaded = true;
   updateBigPicture(message.originalUrl, item.thumbUrl);
 }
@@ -203,91 +195,20 @@ function getPictureData (thumbUrl) {
 }
 
 function updateTotalDownloadCount ({ count, filename }) {
-  const { update } = window.__PAGE_DATA.popup;
-
-  update(count, filename);
-
-  if (!count) {
-    window.__PAGE_DATA.popup = null;
-  }
-}
-
-function stopDownloading () {
-  browser.runtime.sendMessage({
-    type: MESSAGES.STOP_DOWNLOADING
-  });
-  window.__PAGE_DATA.isDownloading = false;
+ Popup.update(count, filename);
 }
 
 async function prepareDownloadAllAsArchive () {
-  const { title, href, urls, tabId } = window.__PAGE_DATA;
-
-  window.__PAGE_DATA.popup = setupDownloadPopup(window.__PAGE_DATA.urls.length);
+  const { urls, tabId } = window.__PAGE_DATA;
+  
+  Popup.build(window.__PAGE_DATA.urls.length);
 
   browser.runtime.sendMessage({
     type: MESSAGES.GET_ALL_IMAGES_URLS_FOR_GALLERY,
-    title,
-    href,
     urls,
-    galleryTabId: tabId,
+    tabId,
+    reason: EXTRACTION_REASON.COLLECT_ORIGINAL_URLS,
   });
-}
-
-async function downloadAllAsArchive (message) {
-  const zip = new JSZip();
-  const { urls, href, origin, title, naming, specialRule } = window.__PAGE_DATA;
-  const [S_ORIGIN,,,S_NAMING] = specialRule;
-
-  window.__PAGE_DATA.isDownloading = true;
-  let info = DOWNLOAD_INFO_HEADRERS.join("\t") + "\n";
-
-  for (let i = 0; i < urls.length; i++) {
-    if (!window.__PAGE_DATA.isDownloading) {
-      updateTotalDownloadCount({ count: 0 });
-      return;
-    }
-
-    const pictureData = window.__PAGE_DATA.urls[i];
-    const newPictureData = message.originalUrls.find(
-      ({ originalHref }) =>
-        originalHref === pictureData.originalHref ||
-        (originalHref && originalHref.startsWith(pictureData.originalHref)),
-    );
-
-    Object.assign(pictureData, newPictureData, { isPreloaded: true });
-    const { thumbUrl, originalHref, originalUrl, originalTitle } = pictureData;
-
-    try {
-      const downloadUrl = originalUrl && isMediaResource(originalUrl, S_ORIGIN || origin) ? originalUrl : thumbUrl;
-      updateTotalDownloadCount({ count: i + 1, filename: `Downloading: ${downloadUrl}` });
-      const file = await fetch(downloadUrl).then((res) => res.blob());
-      const extension = extractExtension(downloadUrl);
-      const fileNaming = S_NAMING || naming;
-      const name = selectImageName(fileNaming, title, href, downloadUrl);
-      const fileName = `${name}${fileNaming !== "Original" ? ` (${i + 1})` : ""}.${extension}`;
-      zip.file(fileName, file);
-      info +=
-        [name, href, thumbUrl, originalHref, originalUrl, originalTitle].join(
-          "\t",
-        ) + "\n";
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  zip.file(`info.txt`, new Blob([info], { type: "text/plain" }));
-
-  const zipData = await zip.generateAsync({
-    type: "blob",
-    streamFiles: true,
-  });
-
-  const link = document.createElement("a");
-  link.href = window.URL.createObjectURL(zipData);
-  link.download = `${window.__PAGE_DATA.title}.zip`;
-  link.click();
-
-  updateTotalDownloadCount({ count: 0 });
 }
 
 function onShowingOriginalError (url, thumbUrl) {

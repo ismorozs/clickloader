@@ -17,6 +17,12 @@ export const MESSAGES = {
   ERROR: "ERROR",
 };
 
+export const COLLECTING_REASON = {
+  FOR_GALLERY: "FOR_GALLERY",
+  DOWNLOAD_ON_SITE_RAW: "DOWNLOAD_ON_SITE_RAW",
+  DOWNLOAD_ON_SITE_AS_ARCHIVE: "DOWNLOAD_ON_SITE_AS_ARCHIVE",
+}
+
 export const EXTRACTION_REASON = {
   DOWNLOAD: "DOWNLOAD",
   COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
@@ -36,3 +42,15 @@ export const IMAGES_GALLERY_URL = "/images-gallery/index.html";
 export const ERRORS = {
   INVALID_URL: "Invalid URL",
 };
+
+export const CHARACTERS = {
+  TAB: "\t",
+  NL: "\n",
+};
+
+export const DEBUG_FILENAME = "image_urls.txt";
+
+export const DOWNLOAD_STATUS = {
+  DOWNLAODING: "Downloading: ",
+  PREPARING: "Preparing: ",
+}

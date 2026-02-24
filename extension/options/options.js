@@ -1442,6 +1442,10 @@ function onStorageChange (changes) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   CHARACTERS: () => (/* binding */ CHARACTERS),
+/* harmony export */   COLLECTING_REASON: () => (/* binding */ COLLECTING_REASON),
+/* harmony export */   DEBUG_FILENAME: () => (/* binding */ DEBUG_FILENAME),
+/* harmony export */   DOWNLOAD_STATUS: () => (/* binding */ DOWNLOAD_STATUS),
 /* harmony export */   ERRORS: () => (/* binding */ ERRORS),
 /* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
@@ -1469,6 +1473,12 @@ const MESSAGES = {
   ERROR: "ERROR",
 };
 
+const COLLECTING_REASON = {
+  FOR_GALLERY: "FOR_GALLERY",
+  DOWNLOAD_ON_SITE_RAW: "DOWNLOAD_ON_SITE_RAW",
+  DOWNLOAD_ON_SITE_AS_ARCHIVE: "DOWNLOAD_ON_SITE_AS_ARCHIVE",
+}
+
 const EXTRACTION_REASON = {
   DOWNLOAD: "DOWNLOAD",
   COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
@@ -1489,6 +1499,18 @@ const ERRORS = {
   INVALID_URL: "Invalid URL",
 };
 
+const CHARACTERS = {
+  TAB: "\t",
+  NL: "\n",
+};
+
+const DEBUG_FILENAME = "image_urls.txt";
+
+const DOWNLOAD_STATUS = {
+  DOWNLAODING: "Downloading: ",
+  PREPARING: "Preparing: ",
+}
+
 
 /***/ }),
 
@@ -1505,12 +1527,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
+/* harmony export */   getFileName: () => (/* binding */ getFileName),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
 /* harmony export */   isMediaResource: () => (/* binding */ isMediaResource),
 /* harmony export */   isValidUrl: () => (/* binding */ isValidUrl),
 /* harmony export */   isVideo: () => (/* binding */ isVideo),
-/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters),
-/* harmony export */   selectImageName: () => (/* binding */ selectImageName)
+/* harmony export */   removeForbiddenCharacters: () => (/* binding */ removeForbiddenCharacters)
 /* harmony export */ });
 /* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
 const browser = __webpack_require__(/*! webextension-polyfill */ "./node_modules/webextension-polyfill/dist/browser-polyfill.js");
@@ -1579,14 +1601,26 @@ function extractOriginalFileName (url) {
   return url.split("/").slice(-1)[0].split(".")[0];
 }
 
-function selectImageName(type, title, url, original) {
-  const name = type === "URL"
-    ? url
-    : type === "Original"
-      ? extractOriginalFileName(original)
-      : title;
+function getFileName (pictureData, idx) {
+  const { thumbUrl, originalUrl, originalHref, origin, title, href, naming } = pictureData;
 
-  return removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME);
+  const downloadUrl =
+      originalUrl && isMediaResource(originalUrl, origin)
+        ? originalUrl
+        : thumbUrl;
+
+  const name =
+    naming === "URL"
+      ? href
+      : naming === "Original"
+        ? extractOriginalFileName(originalUrl || originalHref)
+        : title;
+
+  const number = naming !== "Original" && idx ? ` (${idx})` : "";
+
+  const fileName = `${removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME)}${number}`;
+
+  return [fileName, downloadUrl];
 }
 
 

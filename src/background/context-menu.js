@@ -1,5 +1,6 @@
 const browser = require('webextension-polyfill');
 
+import { COLLECTING_REASON } from '../shared/consts';
 import State from '../shared/state';
 import { runUserScript, openSettings } from "./actions";
 import { prepareForGalleryPage } from "./actions/gallery";
@@ -12,6 +13,7 @@ const EVENT_MEANINGS = {
 
 const TRY_ORIGINAL_STATES = ['Disabled', 'Download original'];
 const NAMING_STATES = ["Title", "URL", "Original"];
+const DOWNLOAD_ALL_OPTIONS = ["Raw", "As archive"];
 
 const CONTEXT_MENU = {
   MAIN: { ID: 'MAIN', TITLE: (isActive, tryOriginal) => {
@@ -23,6 +25,7 @@ const CONTEXT_MENU = {
   MANAGE_FOLDERS: { ID: 'N', TITLE: 'Manage folders' },
   METHOD_SUBMENU: { ID: 'M', TITLE: (currentMethod) => 'Save method: ' + EVENT_MEANINGS[currentMethod] },
   NAMING_SUBMENU: { ID: 'G', TITLE: (currentNaming) => `Save naming: ${currentNaming}` },
+  DOWNLOAD_ALL_SUBMENU: { ID: 'D', TITLE: "Download all from the page" },
   TRY_DOWNLOAD_ORIGINAL: { ID: 'O', TITLE: (currentTryOriginal) => buildTryOriginalTitle(currentTryOriginal) },
   SHOW_PICTURES_GALERY: { ID: 'P', TITLE: 'Show page pictures' },
   CUSTOMIZE: { ID: 'C', TITLE: 'Customize special rules' },
@@ -30,6 +33,7 @@ const CONTEXT_MENU = {
   SEPARATOR2: { ID: 'SEPARATOR2' },
   SEPARATOR3: { ID: 'SEPARATOR3' },
   SEPARATOR4: { ID: 'SEPARATOR4' },
+  SEPARATOR5: { ID: 'SEPARATOR5' },
 };
 
 function buildTryOriginalTitle (currentTryOriginal) {
@@ -41,6 +45,13 @@ export function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod,
     browser.contextMenus.create({ id: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.MAIN.TITLE(active, tryOriginal), contexts: ["all"] });
     browser.contextMenus.create({ id: CONTEXT_MENU.SWITCH.ID, parentId: CONTEXT_MENU.MAIN.ID, title: CONTEXT_MENU.SWITCH.TITLE(active), contexts: ["all"] });
     setupTryDownloadOrignalSubmenu(tryOriginal);
+    
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.SEPARATOR5.ID,
+      parentId: CONTEXT_MENU.MAIN.ID,
+      type: "separator",
+    });
+
     browser.contextMenus.create({ id: CONTEXT_MENU.SEPARATOR4.ID, parentId: CONTEXT_MENU.MAIN.ID, type: 'separator' });
 
     setupFolderSubmenu(saveFolders, saveFolder);
@@ -52,6 +63,9 @@ export function setupContextMenu ({ active, saveFolders, saveFolder, saveMethod,
       parentId: CONTEXT_MENU.MAIN.ID,
       type: "separator",
     });
+
+    setupDownloadAllSubmenu();
+
     browser.contextMenus.create({
       id: CONTEXT_MENU.SHOW_PICTURES_GALERY.ID,
       parentId: CONTEXT_MENU.MAIN.ID,
@@ -102,6 +116,24 @@ function setupNamingSubmnenu (currentNaming) {
       checked: isActive,
     });
   }); 
+}
+
+function setupDownloadAllSubmenu () {
+  browser.contextMenus.create({
+    id: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID,
+    parentId: CONTEXT_MENU.MAIN.ID,
+    title: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.TITLE,
+    contexts: ["all"],
+  });
+
+  DOWNLOAD_ALL_OPTIONS.forEach((title, i) => {
+    browser.contextMenus.create({
+      id: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID + i,
+      parentId: CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID,
+      title,
+      contexts: ["all"],
+    });
+  });
 }
 
 function setupTryDownloadOrignalSubmenu (currentTryOriginal) {
@@ -155,6 +187,10 @@ export function onContextMenuClicked (info) {
       changeSaveNaming(info.menuItemId[1]);
       break;
 
+    case CONTEXT_MENU.DOWNLOAD_ALL_SUBMENU.ID:
+      downloadAll(info.menuItemId[1]);
+      break;
+
     case CONTEXT_MENU.MANAGE_FOLDERS.ID:
       openSettings();
       return;
@@ -198,9 +234,15 @@ function changeSaveNaming (methodIdx) {
 }
 
 async function openPagePictures () {
-  prepareForGalleryPage();
+  prepareForGalleryPage(COLLECTING_REASON.FOR_GALLERY);
 }
 
 function changeSaveFolder (folderIdx) {
   browser.storage.local.set({ saveFolder: State.saveFolders()[ folderIdx ] });
+}
+
+function downloadAll (downloadIdx) {
+  downloadIdx == 1
+    ? prepareForGalleryPage(COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE)
+    : prepareForGalleryPage(COLLECTING_REASON.DOWNLOAD_ON_SITE_RAW);
 }

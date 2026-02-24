@@ -1,6 +1,6 @@
 const browser = require("webextension-polyfill");
 
-import { EXTRACTION_REASON, MESSAGES } from "../shared/consts";
+import { COLLECTING_REASON, EXTRACTION_REASON, MESSAGES } from "../shared/consts";
 
 import {
   saveContent,
@@ -32,6 +32,7 @@ export async function onMessage(message) {
           sendOriginalImageUrlForPreview(message);
           break;
         case EXTRACTION_REASON.COLLECT_ORIGINAL_URLS:
+        case COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE:
           saveOriginalUrl(message);
           break;
       }
@@ -42,7 +43,17 @@ export async function onMessage(message) {
       break;
 
     case MESSAGES.RECEIVE_IMAGES_URLS:
-      createGalleryPage(message);
+      switch (message.reason) {
+        case COLLECTING_REASON.DOWNLOAD_ON_SITE_RAW:
+          saveAllOriginalImagesRaw(message);
+          break;
+        case COLLECTING_REASON.DOWNLOAD_ON_SITE_AS_ARCHIVE:
+          collectAllOriginalImageUrls(message);
+          break;
+        default:
+          createGalleryPage(message);
+          break;
+      }
       break;
 
     case MESSAGES.GET_IMAGE_URL_FOR_GALLERY:

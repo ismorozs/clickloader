@@ -64,12 +64,24 @@ function extractOriginalFileName (url) {
   return url.split("/").slice(-1)[0].split(".")[0];
 }
 
-export function selectImageName(type, title, url, original) {
-  const name = type === "URL"
-    ? url
-    : type === "Original"
-      ? extractOriginalFileName(original)
-      : title;
+export function getFileName (pictureData, idx) {
+  const { thumbUrl, originalUrl, originalHref, origin, title, href, naming } = pictureData;
 
-  return removeForbiddenCharacters(name).substring(0, MAX_FILE_NAME);
+  const downloadUrl =
+      originalUrl && isMediaResource(originalUrl, origin)
+        ? originalUrl
+        : thumbUrl;
+
+  const name =
+    naming === "URL"
+      ? href
+      : naming === "Original"
+        ? extractOriginalFileName(originalUrl || originalHref)
+        : title;
+
+  const number = naming !== "Original" && idx ? ` (${idx})` : "";
+
+  const fileName = `${removeForbiddenCharacters(name).substring(0, MAX_FILE_NAME)}${number}`;
+
+  return [fileName, downloadUrl];
 }

@@ -32,6 +32,10 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   CHARACTERS: () => (/* binding */ CHARACTERS),
+/* harmony export */   COLLECTING_REASON: () => (/* binding */ COLLECTING_REASON),
+/* harmony export */   DEBUG_FILENAME: () => (/* binding */ DEBUG_FILENAME),
+/* harmony export */   DOWNLOAD_STATUS: () => (/* binding */ DOWNLOAD_STATUS),
 /* harmony export */   ERRORS: () => (/* binding */ ERRORS),
 /* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
@@ -59,6 +63,12 @@ const MESSAGES = {
   ERROR: "ERROR",
 };
 
+const COLLECTING_REASON = {
+  FOR_GALLERY: "FOR_GALLERY",
+  DOWNLOAD_ON_SITE_RAW: "DOWNLOAD_ON_SITE_RAW",
+  DOWNLOAD_ON_SITE_AS_ARCHIVE: "DOWNLOAD_ON_SITE_AS_ARCHIVE",
+}
+
 const EXTRACTION_REASON = {
   DOWNLOAD: "DOWNLOAD",
   COLLECT_ORIGINAL_URLS: "COLLECT_ORIGINAL_URLS",
@@ -78,6 +88,18 @@ const IMAGES_GALLERY_URL = "/images-gallery/index.html";
 const ERRORS = {
   INVALID_URL: "Invalid URL",
 };
+
+const CHARACTERS = {
+  TAB: "\t",
+  NL: "\n",
+};
+
+const DEBUG_FILENAME = "image_urls.txt";
+
+const DOWNLOAD_STATUS = {
+  DOWNLAODING: "Downloading: ",
+  PREPARING: "Preparing: ",
+}
 
 
 /***/ })
@@ -153,22 +175,18 @@ const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyf
 
 browser.runtime.onMessage.addListener(onMessage);
 
-function onMessage ({ imageSelector, reason, galleryTabId, tabWithOriginId, thumbUrl, title, href }) {
-  const img = document.querySelector(imageSelector);
+function onMessage (message) {
+  const img = document.querySelector(message.imageSelector);
   const url = img && img.src;
 
   browser.runtime.sendMessage({
+    ...message,
     type: _shared_consts__WEBPACK_IMPORTED_MODULE_0__.MESSAGES.RECEIVE_ORIGINAL_URL,
-    title,
-    href,
-    thumbUrl,
     originalUrl: url,
     originalHref: document.location.href,
     originalTitle: document.title,
-    reason,
-    galleryTabId,
-    tabWithOriginId,
     isFromSpecialCase: true,
+    origin: document.location.origin,
   });
 }
 
