@@ -1,7 +1,13 @@
 const browser = require("webextension-polyfill/dist/browser-polyfill.min");
 
-import { EXTENSION_NAME, MESSAGES } from "../shared/consts";
-import { createElement, downloadFile } from "../shared/markup";
+import { EXTENSION_NAME, LOADING_ERROR_ADVICE, MESSAGES } from "../shared/consts";
+import { createElement, setText, prependLine } from "../shared/markup";
+
+const ERROR_POPUP_HEADER = LOADING_ERROR_ADVICE;
+const STOP_BUTTON_TEXT = {
+  DEFAULT: "Stop",
+  CLOSE: "Close",
+};
 
 const CLASSES = {
   ANIMATION: "ANIMATION",
@@ -19,12 +25,15 @@ const Popup = {
   styles: null,
   downloadLeft: null,
   downloadingFile: null,
+  errorContainer: null,
   inProgress: false,
+  isFirstError: false,
 };
 
 export default {
   build: buildPopup,
   update: updatePopup,
+  error: addError,
   inProgress: () => Popup.inProgress,
 }
 
@@ -34,7 +43,8 @@ function buildPopup (totalCount) {
   const container = createElement("div", "", [
     prefixClassName(uid, CLASSES.CONTAINER),
   ]);
-  const stopDownloadingButton = createElement("button", "Stop", [
+  const errorContainer = createElement("div", "");
+  const stopDownloadingButton = createElement("button", STOP_BUTTON_TEXT.DEFAULT, [
     prefixClassName(uid, CLASSES.STOP_BUTTON),
   ]);
   stopDownloadingButton.onclick = removePopup;
@@ -62,6 +72,7 @@ function buildPopup (totalCount) {
   progressContainer.appendChild(progressSpinner);
   progressContainer.appendChild(progressNumbers);
 
+  container.appendChild(errorContainer);
   container.appendChild(stopDownloadingButton);
   container.appendChild(progressContainer);
 
@@ -73,7 +84,10 @@ function buildPopup (totalCount) {
   document.body.appendChild(container);
 
   Popup.container = container;
+  Popup.errorContainer = errorContainer;
+  Popup.progressContainer = progressContainer;
   Popup.styles = styles;
+  Popup.stopDownloadingButton = stopDownloadingButton;
   Popup.downloadLeft = downloadLeft;
   Popup.downloadingFile = downloadingFile;
   Popup.inProgress = true;
@@ -89,11 +103,15 @@ function removePopup() {
   });
   Popup.downloadLeft = null;
   Popup.downloadingFile = null;
+  Popup.errorContainer = null;
+  Popup.stopDownloadingButton = null;
+  Popup.progressContainer = null;
   document.body.removeChild(Popup.container);
   document.body.removeChild(Popup.styles);
   Popup.container = null;
   Popup.styles = null;
   Popup.inProgress = false;
+  Popup.isFirstError = false;
   window.removeEventListener("beforeunload", removePopup);
 }
 
@@ -107,12 +125,23 @@ function updatePopup(count, filename) {
   }
 
   if (count === 0) {
+    if (Popup.isFirstError) {
+      setText(Popup.stopDownloadingButton, STOP_BUTTON_TEXT.CLOSE);
+      Popup.container.removeChild(Popup.progressContainer);
+      return;
+    }
     removePopup();
   }
 }
 
-function setText(domNode, text) {
-  domNode.textContent = text;
+function addError (text) {
+  if (!Popup.isFirstError) {
+    prependLine(Popup.errorContainer, ERROR_POPUP_HEADER);
+    prependLine(Popup.errorContainer, "");
+    Popup.isFirstError = true;
+  }
+
+  prependLine(Popup.errorContainer, text);
 }
 
 function prefixClassName(uid, className) {
@@ -157,6 +186,7 @@ function createStyles(uid) {
       align-self: end;
       background-color: white;
       border: 2px solid black;
+      cursor: pointer;
     }
 
     .${prefixClassName(uid, CLASSES.STOP_BUTTON)}:hover {

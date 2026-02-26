@@ -1541,6 +1541,7 @@ async function downloadAllAsArchive(pageData) {
   const { originalUrls } = pageData;
   const { title } = originalUrls[0];
 
+  _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].addHeaders(originalUrls[0], _shared_logger__WEBPACK_IMPORTED_MODULE_2__.LOGGING_HEADERS);
   for (let i = 0; i < originalUrls.length; i++) {
     if (!_download_popup__WEBPACK_IMPORTED_MODULE_3__["default"].inProgress()) {
       return;
@@ -1551,14 +1552,14 @@ async function downloadAllAsArchive(pageData) {
     const extension = (0,_shared_helpers__WEBPACK_IMPORTED_MODULE_0__.extractExtension)(downloadUrl);
 
     _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].add(i)
-    _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].add(originalUrls[i]);
+    _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].add((0,_shared_helpers__WEBPACK_IMPORTED_MODULE_0__.extractKeys)(originalUrls[i], _shared_logger__WEBPACK_IMPORTED_MODULE_2__.LOGGING_IMAGE_DATA));
     _download_popup__WEBPACK_IMPORTED_MODULE_3__["default"].update(idx, `${_shared_consts__WEBPACK_IMPORTED_MODULE_1__.DOWNLOAD_STATUS.DOWNLAODING}${downloadUrl}`);
 
     try {
       const file = await fetch(downloadUrl).then((res) => res.arrayBuffer());
       zip.file(`${fileName}.${extension}`, file);
     } catch (e) {
-      console.error(e);
+      _download_popup__WEBPACK_IMPORTED_MODULE_3__["default"].error(`${e} ${downloadUrl}`);
       _shared_logger__WEBPACK_IMPORTED_MODULE_2__["default"].error(`${e} ${downloadUrl}`);
     }
   }
@@ -1599,6 +1600,12 @@ const browser = __webpack_require__(/*! webextension-polyfill/dist/browser-polyf
 
 
 
+const ERROR_POPUP_HEADER = _shared_consts__WEBPACK_IMPORTED_MODULE_0__.LOADING_ERROR_ADVICE;
+const STOP_BUTTON_TEXT = {
+  DEFAULT: "Stop",
+  CLOSE: "Close",
+};
+
 const CLASSES = {
   ANIMATION: "ANIMATION",
   CONTAINER: "CONTAINER",
@@ -1615,12 +1622,15 @@ const Popup = {
   styles: null,
   downloadLeft: null,
   downloadingFile: null,
+  errorContainer: null,
   inProgress: false,
+  isFirstError: false,
 };
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   build: buildPopup,
   update: updatePopup,
+  error: addError,
   inProgress: () => Popup.inProgress,
 });
 
@@ -1630,7 +1640,8 @@ function buildPopup (totalCount) {
   const container = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "", [
     prefixClassName(uid, CLASSES.CONTAINER),
   ]);
-  const stopDownloadingButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("button", "Stop", [
+  const errorContainer = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("div", "");
+  const stopDownloadingButton = (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.createElement)("button", STOP_BUTTON_TEXT.DEFAULT, [
     prefixClassName(uid, CLASSES.STOP_BUTTON),
   ]);
   stopDownloadingButton.onclick = removePopup;
@@ -1658,6 +1669,7 @@ function buildPopup (totalCount) {
   progressContainer.appendChild(progressSpinner);
   progressContainer.appendChild(progressNumbers);
 
+  container.appendChild(errorContainer);
   container.appendChild(stopDownloadingButton);
   container.appendChild(progressContainer);
 
@@ -1669,7 +1681,10 @@ function buildPopup (totalCount) {
   document.body.appendChild(container);
 
   Popup.container = container;
+  Popup.errorContainer = errorContainer;
+  Popup.progressContainer = progressContainer;
   Popup.styles = styles;
+  Popup.stopDownloadingButton = stopDownloadingButton;
   Popup.downloadLeft = downloadLeft;
   Popup.downloadingFile = downloadingFile;
   Popup.inProgress = true;
@@ -1685,30 +1700,45 @@ function removePopup() {
   });
   Popup.downloadLeft = null;
   Popup.downloadingFile = null;
+  Popup.errorContainer = null;
+  Popup.stopDownloadingButton = null;
+  Popup.progressContainer = null;
   document.body.removeChild(Popup.container);
   document.body.removeChild(Popup.styles);
   Popup.container = null;
   Popup.styles = null;
   Popup.inProgress = false;
+  Popup.isFirstError = false;
   window.removeEventListener("beforeunload", removePopup);
 }
 
 function updatePopup(count, filename) {
   if (count) {
-    setText(Popup.downloadLeft, count);
+    (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setText)(Popup.downloadLeft, count);
   }
 
   if (filename) {
-    setText(Popup.downloadingFile, filename);
+    (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setText)(Popup.downloadingFile, filename);
   }
 
   if (count === 0) {
+    if (Popup.isFirstError) {
+      (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.setText)(Popup.stopDownloadingButton, STOP_BUTTON_TEXT.CLOSE);
+      Popup.container.removeChild(Popup.progressContainer);
+      return;
+    }
     removePopup();
   }
 }
 
-function setText(domNode, text) {
-  domNode.textContent = text;
+function addError (text) {
+  if (!Popup.isFirstError) {
+    (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.prependLine)(Popup.errorContainer, ERROR_POPUP_HEADER);
+    (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.prependLine)(Popup.errorContainer, "");
+    Popup.isFirstError = true;
+  }
+
+  (0,_shared_markup__WEBPACK_IMPORTED_MODULE_1__.prependLine)(Popup.errorContainer, text);
 }
 
 function prefixClassName(uid, className) {
@@ -1753,6 +1783,7 @@ function createStyles(uid) {
       align-self: end;
       background-color: white;
       border: 2px solid black;
+      cursor: pointer;
     }
 
     .${prefixClassName(uid, CLASSES.STOP_BUTTON)}:hover {
@@ -1810,6 +1841,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
 /* harmony export */   IMAGES_GALLERY_URL: () => (/* binding */ IMAGES_GALLERY_URL),
+/* harmony export */   LOADING_ERROR_ADVICE: () => (/* binding */ LOADING_ERROR_ADVICE),
 /* harmony export */   MAX_FILE_NAME: () => (/* binding */ MAX_FILE_NAME),
 /* harmony export */   MESSAGES: () => (/* binding */ MESSAGES),
 /* harmony export */   SCRIPTS: () => (/* binding */ SCRIPTS)
@@ -1871,6 +1903,9 @@ const DOWNLOAD_STATUS = {
   PREPARING: "Preparing: ",
 }
 
+const LOADING_ERROR_ADVICE =
+  "(Try downloading from the gallery. Browser console may have more information)";
+
 
 /***/ }),
 
@@ -1886,6 +1921,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   createSafeFolderName: () => (/* binding */ createSafeFolderName),
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
+/* harmony export */   extractKeys: () => (/* binding */ extractKeys),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
 /* harmony export */   getFileName: () => (/* binding */ getFileName),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
@@ -1983,6 +2019,18 @@ function getFileName (pictureData, idx) {
   return [fileName, downloadUrl];
 }
 
+function extractKeys (obj, keys) {
+  const newObj = {};
+
+  for (let key in obj) {
+    if (keys.includes(key)) {
+      newObj[key] = obj[key];
+    }
+  }
+
+  return newObj;
+}
+
 
 /***/ }),
 
@@ -1995,6 +2043,8 @@ function getFileName (pictureData, idx) {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   LOGGING_HEADERS: () => (/* binding */ LOGGING_HEADERS),
+/* harmony export */   LOGGING_IMAGE_DATA: () => (/* binding */ LOGGING_IMAGE_DATA),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _consts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./consts */ "./src/shared/consts.js");
@@ -2004,7 +2054,14 @@ const { TAB, NL } = _consts__WEBPACK_IMPORTED_MODULE_0__.CHARACTERS;
 
 let logText = "";
 
+const LOGGING_HEADERS = ["title", "href", "naming", "imageSelector"];
+const LOGGING_IMAGE_DATA = ["thumbUrl", "originalHref", "originalUrl", "originalTitle"];
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  addHeaders: (data, headers) => {
+    const text = Object.keys(data).filter((k) => headers.includes(k)).map((k) => `${k}: ${data[k]}`).join(NL);
+    logText += text + NL + NL;
+  },
   add: (text) => {
     if (Array.isArray(text)) {
       logText += text.join(TAB);
@@ -2017,7 +2074,7 @@ let logText = "";
     logText += NL;
   },
   error: (text) => {
-    logText += text + NL + NL
+    logText += `${text}${NL}${NL}`
   },
   flush: () => {
     const temp = logText;
@@ -2042,6 +2099,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   downloadFile: () => (/* binding */ downloadFile),
 /* harmony export */   emptyNode: () => (/* binding */ emptyNode),
 /* harmony export */   hasClass: () => (/* binding */ hasClass),
+/* harmony export */   prependLine: () => (/* binding */ prependLine),
+/* harmony export */   setText: () => (/* binding */ setText),
 /* harmony export */   setupEventHandler: () => (/* binding */ setupEventHandler)
 /* harmony export */ });
 function createElement(type, text, classNames = []) {
@@ -2110,6 +2169,18 @@ function downloadFile (content, type, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(href);
+}
+
+function setText(domNode, text) {
+  domNode.textContent = text;
+}
+
+function prependLine (domNode, text) {
+  const span = document.createElement("span");
+  span.textContent = text;
+  const br = document.createElement("br");
+  domNode.insertBefore(br, domNode.firstChild);
+  domNode.insertBefore(span, domNode.firstChild);
 }
 
 /***/ }),

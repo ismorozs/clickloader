@@ -85,3 +85,15 @@ export function getFileName (pictureData, idx) {
 
   return [fileName, downloadUrl];
 }
+
+export function extractKeys (obj, keys) {
+  const newObj = {};
+
+  for (let key in obj) {
+    if (keys.includes(key)) {
+      newObj[key] = obj[key];
+    }
+  }
+
+  return newObj;
+}

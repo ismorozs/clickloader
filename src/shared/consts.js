@@ -54,3 +54,6 @@ export const DOWNLOAD_STATUS = {
   DOWNLAODING: "Downloading: ",
   PREPARING: "Preparing: ",
 }
+
+export const LOADING_ERROR_ADVICE =
+  "(Try downloading from the gallery. Browser console may have more information)";

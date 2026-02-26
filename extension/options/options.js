@@ -1450,6 +1450,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
 /* harmony export */   IMAGES_GALLERY_URL: () => (/* binding */ IMAGES_GALLERY_URL),
+/* harmony export */   LOADING_ERROR_ADVICE: () => (/* binding */ LOADING_ERROR_ADVICE),
 /* harmony export */   MAX_FILE_NAME: () => (/* binding */ MAX_FILE_NAME),
 /* harmony export */   MESSAGES: () => (/* binding */ MESSAGES),
 /* harmony export */   SCRIPTS: () => (/* binding */ SCRIPTS)
@@ -1511,6 +1512,9 @@ const DOWNLOAD_STATUS = {
   PREPARING: "Preparing: ",
 }
 
+const LOADING_ERROR_ADVICE =
+  "(Try downloading from the gallery. Browser console may have more information)";
+
 
 /***/ }),
 
@@ -1526,6 +1530,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   createSafeFolderName: () => (/* binding */ createSafeFolderName),
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
+/* harmony export */   extractKeys: () => (/* binding */ extractKeys),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
 /* harmony export */   getFileName: () => (/* binding */ getFileName),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
@@ -1623,6 +1628,18 @@ function getFileName (pictureData, idx) {
   return [fileName, downloadUrl];
 }
 
+function extractKeys (obj, keys) {
+  const newObj = {};
+
+  for (let key in obj) {
+    if (keys.includes(key)) {
+      newObj[key] = obj[key];
+    }
+  }
+
+  return newObj;
+}
+
 
 /***/ }),
 
@@ -1640,6 +1657,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   downloadFile: () => (/* binding */ downloadFile),
 /* harmony export */   emptyNode: () => (/* binding */ emptyNode),
 /* harmony export */   hasClass: () => (/* binding */ hasClass),
+/* harmony export */   prependLine: () => (/* binding */ prependLine),
+/* harmony export */   setText: () => (/* binding */ setText),
 /* harmony export */   setupEventHandler: () => (/* binding */ setupEventHandler)
 /* harmony export */ });
 function createElement(type, text, classNames = []) {
@@ -1708,6 +1727,18 @@ function downloadFile (content, type, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(href);
+}
+
+function setText(domNode, text) {
+  domNode.textContent = text;
+}
+
+function prependLine (domNode, text) {
+  const span = document.createElement("span");
+  span.textContent = text;
+  const br = document.createElement("br");
+  domNode.insertBefore(br, domNode.firstChild);
+  domNode.insertBefore(span, domNode.firstChild);
 }
 
 /***/ }),

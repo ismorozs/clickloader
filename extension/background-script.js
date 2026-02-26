@@ -2127,6 +2127,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   EXTENSION_NAME: () => (/* binding */ EXTENSION_NAME),
 /* harmony export */   EXTRACTION_REASON: () => (/* binding */ EXTRACTION_REASON),
 /* harmony export */   IMAGES_GALLERY_URL: () => (/* binding */ IMAGES_GALLERY_URL),
+/* harmony export */   LOADING_ERROR_ADVICE: () => (/* binding */ LOADING_ERROR_ADVICE),
 /* harmony export */   MAX_FILE_NAME: () => (/* binding */ MAX_FILE_NAME),
 /* harmony export */   MESSAGES: () => (/* binding */ MESSAGES),
 /* harmony export */   SCRIPTS: () => (/* binding */ SCRIPTS)
@@ -2188,6 +2189,9 @@ const DOWNLOAD_STATUS = {
   PREPARING: "Preparing: ",
 }
 
+const LOADING_ERROR_ADVICE =
+  "(Try downloading from the gallery. Browser console may have more information)";
+
 
 /***/ }),
 
@@ -2203,6 +2207,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   createSafeFolderName: () => (/* binding */ createSafeFolderName),
 /* harmony export */   executeScript: () => (/* binding */ executeScript),
 /* harmony export */   extractExtension: () => (/* binding */ extractExtension),
+/* harmony export */   extractKeys: () => (/* binding */ extractKeys),
 /* harmony export */   getCurrentTab: () => (/* binding */ getCurrentTab),
 /* harmony export */   getFileName: () => (/* binding */ getFileName),
 /* harmony export */   isHTTPUrl: () => (/* binding */ isHTTPUrl),
@@ -2298,6 +2303,18 @@ function getFileName (pictureData, idx) {
   const fileName = `${removeForbiddenCharacters(name).substring(0, _consts__WEBPACK_IMPORTED_MODULE_0__.MAX_FILE_NAME)}${number}`;
 
   return [fileName, downloadUrl];
+}
+
+function extractKeys (obj, keys) {
+  const newObj = {};
+
+  for (let key in obj) {
+    if (keys.includes(key)) {
+      newObj[key] = obj[key];
+    }
+  }
+
+  return newObj;
 }
 
 

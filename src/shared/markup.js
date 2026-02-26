@@ -65,3 +65,15 @@ export function downloadFile (content, type, filename) {
   document.body.removeChild(a);
   URL.revokeObjectURL(href);
 }
+
+export function setText(domNode, text) {
+  domNode.textContent = text;
+}
+
+export function prependLine (domNode, text) {
+  const span = document.createElement("span");
+  span.textContent = text;
+  const br = document.createElement("br");
+  domNode.insertBefore(br, domNode.firstChild);
+  domNode.insertBefore(span, domNode.firstChild);
+}

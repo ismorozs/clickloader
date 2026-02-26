@@ -1,9 +1,9 @@
 const browser = require("webextension-polyfill/dist/browser-polyfill.min");
 const JSZip = require("jszip");
 
-import { getFileName, extractExtension } from "../shared/helpers";
+import { getFileName, extractExtension, extractKeys } from "../shared/helpers";
 import { DEBUG_FILENAME, DOWNLOAD_STATUS } from "../shared/consts";
-import Logger from "../shared/logger";
+import Logger, { LOGGING_HEADERS, LOGGING_IMAGE_DATA } from "../shared/logger";
 import Popup from "./download-popup";
 
 export async function downloadAllAsArchive(pageData) {
@@ -11,6 +11,7 @@ export async function downloadAllAsArchive(pageData) {
   const { originalUrls } = pageData;
   const { title } = originalUrls[0];
 
+  Logger.addHeaders(originalUrls[0], LOGGING_HEADERS);
   for (let i = 0; i < originalUrls.length; i++) {
     if (!Popup.inProgress()) {
       return;
@@ -21,14 +22,14 @@ export async function downloadAllAsArchive(pageData) {
     const extension = extractExtension(downloadUrl);
 
     Logger.add(i)
-    Logger.add(originalUrls[i]);
+    Logger.add(extractKeys(originalUrls[i], LOGGING_IMAGE_DATA));
     Popup.update(idx, `${DOWNLOAD_STATUS.DOWNLAODING}${downloadUrl}`);
 
     try {
       const file = await fetch(downloadUrl).then((res) => res.arrayBuffer());
       zip.file(`${fileName}.${extension}`, file);
     } catch (e) {
-      console.error(e);
+      Popup.error(`${e} ${downloadUrl}`);
       Logger.error(`${e} ${downloadUrl}`);
     }
   }
